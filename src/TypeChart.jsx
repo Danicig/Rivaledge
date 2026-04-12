@@ -30,7 +30,7 @@ function getTextColor(val) {
 }
 
 export default function TypeChart() {
-  const SIZE = 28
+  const SIZE = 36
 
   return (
     <div className="animate-fade-in">
@@ -55,7 +55,7 @@ export default function TypeChart() {
         ))}
       </div>
 
-      {/* TABLE — horizontally scrollable on mobile */}
+      {/* TABLE */}
       <div className="overflow-x-auto rounded-xl border border-[#1c2830]">
         <table className="border-collapse" style={{ minWidth: `${SIZE * (TIPOS.length + 1)}px` }}>
           <thead>
@@ -73,7 +73,7 @@ export default function TypeChart() {
                       justifyContent: 'center',
                       writingMode: 'vertical-rl',
                       transform: 'rotate(180deg)',
-                      fontSize: 8,
+                      fontSize: 10,
                       fontWeight: 'bold',
                       color: darkText.includes(t) ? '#111' : '#fff',
                       letterSpacing: 1,
@@ -96,7 +96,7 @@ export default function TypeChart() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 8,
+                    fontSize: 10,
                     fontWeight: 'bold',
                     color: darkText.includes(atkType) ? '#111' : '#fff',
                     letterSpacing: 1,
@@ -116,7 +116,7 @@ export default function TypeChart() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: 9,
+                        fontSize: 11,
                         fontWeight: 'bold',
                         color: getTextColor(val),
                         borderRight: '1px solid #0c1015',
