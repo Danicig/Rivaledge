@@ -80,7 +80,7 @@ export default function Landing({ onEnter }) {
           <span className="font-mono-tech text-xs text-yellow-400 tracking-widest uppercase">Pokemon Champions 2026 · Regulation M-A</span>
         </div>
 
-        <h1 className="font-orbitron text-7xl sm:text-8xl font-black tracking-widest mb-4 leading-none">
+        <h1 className="font-orbitron text-4xl sm:text-7xl lg:text-8xl font-black tracking-widest mb-4 leading-none">
           RIVAL<span className="text-yellow-400" style={{ textShadow: '0 0 40px rgba(240,192,64,0.5)' }}>EDGE</span>
         </h1>
 
