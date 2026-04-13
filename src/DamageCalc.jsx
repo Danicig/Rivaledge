@@ -88,9 +88,17 @@ const ITEMS = [
   { name: 'Expert Belt', atkMult: 1.2, defMult: 1, superEffOnly: true },
 ]
 
+const WEATHER_OPTIONS = [
+  { id: 'none',  label: 'Clear',      icon: '☀️' },
+  { id: 'sun',   label: 'Harsh Sun',  icon: '🌞' },
+  { id: 'rain',  label: 'Rain',       icon: '🌧️' },
+  { id: 'sand',  label: 'Sandstorm',  icon: '🏜️' },
+  { id: 'snow',  label: 'Snow',       icon: '❄️' },
+]
+
 const WEATHER_BOOSTS = {
   none: { fire: 1, water: 1, ice: 1, rock: 1 },
-  sun: { fire: 1.5, water: 0.5, ice: 1, rock: 1 },
+  sun:  { fire: 1.5, water: 0.5, ice: 1, rock: 1 },
   rain: { fire: 0.5, water: 1.5, ice: 1, rock: 1 },
   sand: { fire: 1, water: 1, ice: 1, rock: 1 },
   snow: { fire: 1, water: 1, ice: 1, rock: 1 },
@@ -124,6 +132,22 @@ function getHPAtLevel50(base, evs = 0) {
   return Math.floor((2 * base + 31 + Math.floor(evs / 4)) * 50 / 100) + 50 + 10
 }
 
+function getEffLabel(eff) {
+  if (eff === 0)    return { text: 'Immune — No damage',       color: 'text-[#4a6070]' }
+  if (eff >= 4)     return { text: '×4 Super Effective!',      color: 'text-red-400' }
+  if (eff >= 2)     return { text: '×2 Super Effective',       color: 'text-orange-400' }
+  if (eff <= 0.25)  return { text: '×0.25 Not Very Effective', color: 'text-green-600' }
+  if (eff <= 0.5)   return { text: '×0.5 Not Very Effective',  color: 'text-green-400' }
+  return { text: '×1 Normal Damage', color: 'text-[#4a6070]' }
+}
+
+function getKOLabel(minPct, maxPct) {
+  if (maxPct >= 100 && minPct >= 100) return { text: 'Guaranteed KO!', color: 'text-red-400' }
+  if (maxPct >= 100)                  return { text: 'Possible KO',    color: 'text-orange-400' }
+  if (maxPct >= 50)                   return { text: '2HKO range',     color: 'text-yellow-400' }
+  return { text: 'Survives',          color: 'text-green-400' }
+}
+
 export default function DamageCalc() {
   const [attacker, setAttacker] = useState(null)
   const [defender, setDefender] = useState(null)
@@ -134,11 +158,14 @@ export default function DamageCalc() {
   const [moves, setMoves] = useState([])
   const [selectedMove, setSelectedMove] = useState(null)
   const [moveSearch, setMoveSearch] = useState('')
+  const [moveCategory, setMoveCategory] = useState('all')
   const [loadingAttacker, setLoadingAttacker] = useState(false)
   const [loadingDefender, setLoadingDefender] = useState(false)
   const [loadingMoves, setLoadingMoves] = useState(false)
   const [results, setResults] = useState(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [history, setHistory] = useState([])
+  const [copied, setCopied] = useState(false)
 
   const [atkNature, setAtkNature] = useState(NATURES[0])
   const [defNature, setDefNature] = useState(NATURES[0])
@@ -150,10 +177,7 @@ export default function DamageCalc() {
 
   async function fetchPokemonData(name) {
     const apiName = POKEAPI_NAME_MAP[name] || name.toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/['.]/g, '')
-      .replace('♀', '-f')
-      .replace('♂', '-m')
+      .replace(/\s+/g, '-').replace(/['.]/g, '').replace('♀', '-f').replace('♂', '-m')
     const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${apiName}`)
     if (!res.ok) throw new Error('Not found')
     return res.json()
@@ -173,39 +197,23 @@ export default function DamageCalc() {
 
   useEffect(() => {
     if (!attacker) { setAttackerData(null); setMoves([]); setSelectedMove(null); setAttackerError(false); return }
-    setLoadingAttacker(true)
-    setLoadingMoves(true)
-    setAttackerError(false)
+    setLoadingAttacker(true); setLoadingMoves(true); setAttackerError(false)
     fetchPokemonData(attacker.name)
       .then(async data => {
-        setAttackerData(data)
-        setLoadingAttacker(false)
+        setAttackerData(data); setLoadingAttacker(false)
         const movesToFetch = data.moves
-          .filter(m => m.version_group_details.some(v =>
-            ['level-up', 'machine'].includes(v.move_learn_method.name)
-          ))
+          .filter(m => m.version_group_details.some(v => ['level-up','machine'].includes(v.move_learn_method.name)))
           .slice(0, 60)
-        const moveResults = await Promise.all(
-          movesToFetch.map(m => fetchMoveData(m.move.url).catch(() => null))
-        )
-        const validMoves = moveResults
-          .filter(Boolean)
-          .filter(m => TYPE_MAP[m.type])
-          .sort((a, b) => b.power - a.power)
-        setMoves(validMoves)
-        setLoadingMoves(false)
+        const moveResults = await Promise.all(movesToFetch.map(m => fetchMoveData(m.move.url).catch(() => null)))
+        const validMoves = moveResults.filter(Boolean).filter(m => TYPE_MAP[m.type]).sort((a, b) => b.power - a.power)
+        setMoves(validMoves); setLoadingMoves(false)
       })
-      .catch(() => {
-        setLoadingAttacker(false)
-        setLoadingMoves(false)
-        setAttackerError(true)
-      })
+      .catch(() => { setLoadingAttacker(false); setLoadingMoves(false); setAttackerError(true) })
   }, [attacker])
 
   useEffect(() => {
     if (!defender) { setDefenderData(null); setDefenderError(false); return }
-    setLoadingDefender(true)
-    setDefenderError(false)
+    setLoadingDefender(true); setDefenderError(false)
     fetchPokemonData(defender.name)
       .then(data => { setDefenderData(data); setLoadingDefender(false) })
       .catch(() => { setLoadingDefender(false); setDefenderError(true) })
@@ -213,67 +221,77 @@ export default function DamageCalc() {
 
   function calculate() {
     if (!attackerData || !defenderData || !selectedMove) return
-
     const atkStats = attackerData.stats
     const defStats = defenderData.stats
     const getStat = (stats, name) => stats.find(s => s.stat.name === name)?.base_stat || 100
-
     const isPhysical = selectedMove.category === 'physical'
-
     const atkNatureMult = isPhysical ? atkNature.atk : atkNature.spa
-    const attackStat = getStatAtLevel50(
-      isPhysical ? getStat(atkStats, 'attack') : getStat(atkStats, 'special-attack'),
-      atkEVs, atkNatureMult
-    )
-
+    const attackStat = getStatAtLevel50(isPhysical ? getStat(atkStats, 'attack') : getStat(atkStats, 'special-attack'), atkEVs, atkNatureMult)
     const defNatureMult = isPhysical ? defNature.def : defNature.spd
-    const defenseStat = getStatAtLevel50(
-      isPhysical ? getStat(defStats, 'defense') : getStat(defStats, 'special-defense'),
-      defEVs, defNatureMult
-    )
-
+    const defenseStat = getStatAtLevel50(isPhysical ? getStat(defStats, 'defense') : getStat(defStats, 'special-defense'), defEVs, defNatureMult)
     const defenderHP = getHPAtLevel50(getStat(defStats, 'hp'))
     const effectiveness = getEff(selectedMove.type, defender.types)
     const stab = attacker.types.includes(selectedMove.type)
-
     let atkItemMult = atkItem.atkMult
     if (atkItem.physical && !isPhysical) atkItemMult = 1
     if (atkItem.special && isPhysical) atkItemMult = 1
     if (atkItem.superEffOnly && effectiveness < 2) atkItemMult = 1
-
     let defItemMult = defItem.defMult
     if (defItem.defSpecial && isPhysical) defItemMult = 1
-
     const finalAtkStat = Math.floor(attackStat * atkItemMult)
     const finalDefStat = Math.floor(defenseStat * defItemMult)
     const weatherMult = WEATHER_BOOSTS[weather]?.[selectedMove.type] || 1
-
     const { min, max } = calcDamage(selectedMove.power, finalAtkStat, finalDefStat, effectiveness, stab, weatherMult)
     const minPct = Math.round((min / defenderHP) * 100)
     const maxPct = Math.round((max / defenderHP) * 100)
-
-    setResults({ min, max, minPct, maxPct, effectiveness, stab, defenderHP })
+    const newResult = { min, max, minPct, maxPct, effectiveness, stab, defenderHP,
+      attackerName: attacker.name, defenderName: defender.name,
+      moveName: selectedMove.name, moveType: selectedMove.type, weather }
+    setResults(newResult)
+    setHistory(prev => [newResult, ...prev].slice(0, 5))
   }
 
-  function getEffLabel(eff) {
-    if (eff === 0) return { text: 'Immune — No damage', color: 'text-[#4a6070]' }
-    if (eff >= 4) return { text: 'x4 Super Effective!', color: 'text-red-400' }
-    if (eff >= 2) return { text: 'x2 Super Effective', color: 'text-orange-400' }
-    if (eff <= 0.25) return { text: 'x0.25 Not Very Effective', color: 'text-green-600' }
-    if (eff <= 0.5) return { text: 'x0.5 Not Very Effective', color: 'text-green-400' }
-    return { text: 'x1 Normal Damage', color: 'text-[#4a6070]' }
+  function resetAll() {
+    setAttacker(null); setDefender(null); setAttackerData(null); setDefenderData(null)
+    setMoves([]); setSelectedMove(null); setResults(null); setMoveSearch('')
+    setAtkNature(NATURES[0]); setDefNature(NATURES[0])
+    setAtkItem(ITEMS[0]); setDefItem(ITEMS[0])
+    setAtkEVs(0); setDefEVs(0); setWeather('none')
   }
 
-  const filteredMoves = moves.filter(m =>
-    m.name.toLowerCase().includes(moveSearch.toLowerCase())
-  )
+  function copyResult() {
+    if (!results) return
+    const ko = getKOLabel(results.minPct, results.maxPct)
+    const text = `${results.attackerName} → ${results.moveName} → ${results.defenderName}\n${results.minPct}–${results.maxPct}% HP (${results.min}–${results.max} dmg)\n${ko.text}\n\nrivaledge.net`
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const filteredMoves = moves.filter(m => {
+    const matchSearch = m.name.toLowerCase().includes(moveSearch.toLowerCase())
+    const matchCat = moveCategory === 'all' || m.category === moveCategory
+    return matchSearch && matchCat
+  })
+
+  const statNames = { hp:'HP', attack:'Atk', defense:'Def', 'special-attack':'SpA', 'special-defense':'SpD', speed:'Spe' }
 
   return (
-    <div className="animate-fade-in">
-      <div className="mb-6 bg-[#0c1015] border border-[#1c2830] rounded-xl p-4">
-        <p className="font-mono-tech text-xs text-[#4a6070] tracking-widest">DAMAGE CALCULATOR · Real movepools from PokéAPI · Level 50 · Neutral nature by default</p>
+    <div>
+      {/* Header bar */}
+      <div className="mb-6 bg-[#0c1015] border border-[#1c2830] rounded-xl px-5 py-3.5 flex items-center justify-between">
+        <p className="font-mono-tech text-xs text-[#4a6070] tracking-widest">
+          DAMAGE CALC · PokéAPI movepools · Level 50
+        </p>
+        <button
+          onClick={resetAll}
+          className="font-mono-tech text-xs text-[#4a6070] hover:text-red-400 transition-colors tracking-widest"
+        >
+          Reset all
+        </button>
       </div>
 
+      {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
         {/* ATTACKER */}
@@ -286,26 +304,26 @@ export default function DamageCalc() {
             {loadingAttacker && <p className="text-center text-[#4a6070] text-sm mt-4 font-mono-tech animate-pulse">Loading data...</p>}
             {attackerError && (
               <div className="mt-3 bg-red-950/30 border border-red-500/30 rounded-lg px-4 py-3">
-                <p className="text-red-400 text-xs font-mono-tech">⚠️ Pokémon not found in PokéAPI. This may be a regional form or a Champions-exclusive name. Try its base English name.</p>
+                <p className="text-red-400 text-xs font-mono-tech">⚠️ Not found in PokéAPI. Try the base English name.</p>
                 <button onClick={() => { setAttacker(null); setAttackerError(false) }} className="mt-2 text-xs text-[#4a6070] hover:text-red-400 transition-colors">× Remove</button>
               </div>
             )}
             {attackerData && !loadingAttacker && !attackerError && (
-              <div className="mt-3 animate-fade-in bg-[#111820] border border-[#1c2830] rounded-lg px-4 py-3">
-                <div className="flex items-center justify-between mb-2">
+              <div className="mt-3 bg-[#111820] border border-[#1c2830] rounded-lg px-4 py-3">
+                <div className="flex items-center justify-between mb-3">
                   <span className="font-bold text-white">{attacker.name}</span>
                   <div className="flex gap-1">{attacker.types.map(t => <TypeBadge key={t} type={t} />)}</div>
                 </div>
-                <div className="grid grid-cols-3 gap-1">
+                <div className="grid grid-cols-3 gap-1 mb-2">
                   {attackerData.stats.map(s => (
-                    <div key={s.stat.name} className="text-center">
-                      <div className="font-mono-tech text-xs text-[#4a6070] uppercase">{s.stat.name.replace('special-attack','sp.atk').replace('special-defense','sp.def')}</div>
-                      <div className="font-mono-tech text-xs text-white font-bold">{s.base_stat}</div>
+                    <div key={s.stat.name} className="text-center bg-[#0c1015] rounded-lg py-1.5">
+                      <div className="font-mono-tech text-xs text-[#4a6070]">{statNames[s.stat.name] || s.stat.name}</div>
+                      <div className="font-mono-tech text-sm text-white font-bold">{s.base_stat}</div>
                     </div>
                   ))}
                 </div>
                 <button onClick={() => { setAttacker(null); setSelectedMove(null); setResults(null) }}
-                  className="mt-2 text-xs text-[#4a6070] hover:text-red-400 transition-colors">× Remove</button>
+                  className="text-xs text-[#4a6070] hover:text-red-400 transition-colors">× Remove</button>
               </div>
             )}
           </div>
@@ -313,31 +331,58 @@ export default function DamageCalc() {
 
         {/* MOVE */}
         <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-visible">
-          <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830] rounded-t-xl">
-            <h2 className="font-orbitron text-sm font-bold tracking-widest uppercase text-white">
-              Move {attacker && !loadingMoves && !attackerError && <span className="text-[#4a6070] text-xs normal-case font-normal">({moves.length} available)</span>}
-            </h2>
+          <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830] rounded-t-xl flex items-center justify-between">
+            <h2 className="font-orbitron text-sm font-bold tracking-widest uppercase text-white">Move</h2>
+            {attacker && !loadingMoves && !attackerError && (
+              <span className="font-mono-tech text-xs text-[#4a6070]">{filteredMoves.length} moves</span>
+            )}
           </div>
           <div className="p-4">
             {!attacker && <p className="text-[#4a6070] text-sm italic text-center py-4">Select an attacker first</p>}
-            {attackerError && <p className="text-red-400 text-sm italic text-center py-4">Attacker not found in PokéAPI</p>}
+            {attackerError && <p className="text-red-400 text-sm italic text-center py-4">Attacker not found</p>}
             {loadingMoves && <p className="text-center text-[#4a6070] text-sm font-mono-tech animate-pulse">Loading moves...</p>}
             {attacker && !loadingMoves && !attackerError && (
               <>
-                <input value={moveSearch} onChange={e => setMoveSearch(e.target.value)}
+                <input
+                  value={moveSearch}
+                  onChange={e => setMoveSearch(e.target.value)}
                   placeholder="Filter moves..."
-                  className="w-full bg-[#111820] border border-[#1c2830] rounded-lg px-4 py-2.5 text-white placeholder-[#4a6070] outline-none focus:border-[#2288ff] transition-colors mb-3" />
-                <div className="flex flex-col gap-1 overflow-y-auto max-h-64">
+                  className="w-full bg-[#111820] border border-[#1c2830] rounded-lg px-4 py-2.5 text-white placeholder-[#4a6070] outline-none focus:border-yellow-400/50 transition-colors mb-2"
+                />
+                {/* Category filter */}
+                <div className="flex gap-2 mb-3">
+                  {['all', 'physical', 'special'].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setMoveCategory(cat)}
+                      className={`flex-1 py-1.5 rounded-lg font-mono-tech text-xs tracking-widest uppercase transition-all border ${
+                        moveCategory === cat
+                          ? 'bg-yellow-400/10 border-yellow-400/30 text-yellow-400'
+                          : 'bg-[#111820] border-[#1c2830] text-[#4a6070] hover:text-white'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-1 overflow-y-auto max-h-56">
                   {filteredMoves.map(m => (
                     <button key={m.name} onClick={() => { setSelectedMove(m); setResults(null) }}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-left transition-all border ${
                         selectedMove?.name === m.name
-                          ? 'bg-yellow-400/10 border border-yellow-400/30'
-                          : 'bg-[#111820] border border-[#1c2830] hover:border-[#243040]'
+                          ? 'bg-yellow-400/10 border-yellow-400/30'
+                          : 'bg-[#111820] border-[#1c2830] hover:border-[#2a3840]'
                       }`}>
-                      <span className="text-white text-sm font-semibold">{m.name}</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono-tech text-xs text-[#4a6070]">{m.power} BP</span>
+                        <span className="text-white text-sm font-semibold">{m.name}</span>
+                        <span className={`font-mono-tech text-xs px-1.5 py-0.5 rounded ${
+                          m.category === 'physical' ? 'bg-orange-900/40 text-orange-400' : 'bg-blue-900/40 text-blue-400'
+                        }`}>
+                          {m.category === 'physical' ? 'PHY' : 'SPC'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="font-mono-tech text-xs text-[#4a6070]">{m.power}</span>
                         <MoveBadge type={m.type} />
                       </div>
                     </button>
@@ -359,26 +404,26 @@ export default function DamageCalc() {
             {loadingDefender && <p className="text-center text-[#4a6070] text-sm mt-4 font-mono-tech animate-pulse">Loading data...</p>}
             {defenderError && (
               <div className="mt-3 bg-red-950/30 border border-red-500/30 rounded-lg px-4 py-3">
-                <p className="text-red-400 text-xs font-mono-tech">⚠️ Pokémon not found in PokéAPI. Try its base English name.</p>
+                <p className="text-red-400 text-xs font-mono-tech">⚠️ Not found in PokéAPI. Try the base English name.</p>
                 <button onClick={() => { setDefender(null); setDefenderError(false) }} className="mt-2 text-xs text-[#4a6070] hover:text-red-400 transition-colors">× Remove</button>
               </div>
             )}
             {defenderData && !loadingDefender && !defenderError && (
-              <div className="mt-3 animate-fade-in bg-[#111820] border border-[#1c2830] rounded-lg px-4 py-3">
-                <div className="flex items-center justify-between mb-2">
+              <div className="mt-3 bg-[#111820] border border-[#1c2830] rounded-lg px-4 py-3">
+                <div className="flex items-center justify-between mb-3">
                   <span className="font-bold text-white">{defender.name}</span>
                   <div className="flex gap-1">{defender.types.map(t => <TypeBadge key={t} type={t} />)}</div>
                 </div>
-                <div className="grid grid-cols-3 gap-1">
+                <div className="grid grid-cols-3 gap-1 mb-2">
                   {defenderData.stats.map(s => (
-                    <div key={s.stat.name} className="text-center">
-                      <div className="font-mono-tech text-xs text-[#4a6070] uppercase">{s.stat.name.replace('special-attack','sp.atk').replace('special-defense','sp.def')}</div>
-                      <div className="font-mono-tech text-xs text-white font-bold">{s.base_stat}</div>
+                    <div key={s.stat.name} className="text-center bg-[#0c1015] rounded-lg py-1.5">
+                      <div className="font-mono-tech text-xs text-[#4a6070]">{statNames[s.stat.name] || s.stat.name}</div>
+                      <div className="font-mono-tech text-sm text-white font-bold">{s.base_stat}</div>
                     </div>
                   ))}
                 </div>
                 <button onClick={() => { setDefender(null); setResults(null) }}
-                  className="mt-2 text-xs text-[#4a6070] hover:text-red-400 transition-colors">× Remove</button>
+                  className="text-xs text-[#4a6070] hover:text-red-400 transition-colors">× Remove</button>
               </div>
             )}
           </div>
@@ -387,8 +432,10 @@ export default function DamageCalc() {
 
       {/* ADVANCED OPTIONS */}
       <div className="mb-6">
-        <button onClick={() => setShowAdvanced(!showAdvanced)}
-          className="w-full flex items-center justify-between bg-[#0c1015] border border-[#1c2830] rounded-xl px-5 py-3.5 hover:border-[#243040] transition-colors">
+        <button
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="w-full flex items-center justify-between bg-[#0c1015] border border-[#1c2830] rounded-xl px-5 py-3.5 hover:border-[#243040] transition-colors"
+        >
           <span className="font-orbitron text-xs font-bold tracking-widest uppercase text-[#4a6070]">
             ⚙️ Advanced Options — Natures, Items & Weather
           </span>
@@ -396,7 +443,8 @@ export default function DamageCalc() {
         </button>
 
         {showAdvanced && (
-          <div className="animate-fade-in mt-2 bg-[#0c1015] border border-[#1c2830] rounded-xl p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="mt-2 bg-[#0c1015] border border-[#1c2830] rounded-xl p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Attacker options */}
             <div>
               <p className="font-orbitron text-xs text-yellow-400 tracking-widest mb-3">ATTACKER</p>
               <div className="flex flex-col gap-3">
@@ -423,28 +471,24 @@ export default function DamageCalc() {
               </div>
             </div>
 
+            {/* Weather */}
             <div>
               <p className="font-orbitron text-xs text-yellow-400 tracking-widest mb-3">WEATHER</p>
               <div className="flex flex-col gap-2">
-                {[
-                  { id: 'none', label: '☀️ Clear' },
-                  { id: 'sun', label: '🌞 Harsh Sun' },
-                  { id: 'rain', label: '🌧️ Rain' },
-                  { id: 'sand', label: '🏜️ Sandstorm' },
-                  { id: 'snow', label: '❄️ Snow' },
-                ].map(w => (
+                {WEATHER_OPTIONS.map(w => (
                   <button key={w.id} onClick={() => setWeather(w.id)}
-                    className={`px-3 py-2 rounded-lg text-left text-sm font-semibold transition-colors border ${
+                    className={`px-3 py-2 rounded-lg text-left text-sm font-semibold transition-all border ${
                       weather === w.id
                         ? 'bg-yellow-400/10 border-yellow-400/30 text-yellow-400'
                         : 'bg-[#111820] border-[#1c2830] text-[#4a6070] hover:text-white'
                     }`}>
-                    {w.label}
+                    {w.icon} {w.label}
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Defender options */}
             <div>
               <p className="font-orbitron text-xs text-red-400 tracking-widest mb-3">DEFENDER</p>
               <div className="flex flex-col gap-3">
@@ -474,23 +518,34 @@ export default function DamageCalc() {
         )}
       </div>
 
+      {/* CALCULATE BUTTON */}
       {attackerData && defenderData && selectedMove && (
-        <button onClick={calculate}
-          className="w-full py-4 bg-yellow-400/10 border border-yellow-400/30 rounded-xl font-orbitron text-yellow-400 font-bold tracking-widest uppercase hover:bg-yellow-400/20 transition-all mb-6">
+        <button
+          onClick={calculate}
+          className="w-full py-4 bg-yellow-400/10 border border-yellow-400/30 rounded-xl font-orbitron text-yellow-400 font-bold tracking-widest uppercase hover:bg-yellow-400/20 hover:border-yellow-400/50 transition-all mb-6"
+          style={{ boxShadow: '0 0 20px rgba(240,192,64,0.1)' }}
+        >
           ⚡ CALCULATE DAMAGE
         </button>
       )}
 
+      {/* RESULT */}
       {results && (
-        <div className="animate-fade-in bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-hidden">
-          <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830]">
+        <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-hidden mb-6">
+          <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830] flex items-center justify-between">
             <h2 className="font-orbitron text-sm font-bold tracking-widest uppercase text-yellow-400">Result</h2>
+            <button
+              onClick={copyResult}
+              className="font-mono-tech text-xs text-[#4a6070] hover:text-white transition-colors border border-[#1c2830] hover:border-[#2a3840] px-3 py-1.5 rounded-lg"
+            >
+              {copied ? '✓ Copied' : 'Copy result'}
+            </button>
           </div>
           <div className="p-6">
             <div className="text-center mb-6">
               <p className="font-mono-tech text-xs text-[#4a6070] mb-2 tracking-widest">
                 {attacker.name} → {selectedMove.name} → {defender.name}
-                {weather !== 'none' && <span className="ml-2 text-yellow-400">· {weather}</span>}
+                {weather !== 'none' && <span className="ml-2 text-yellow-400">· {WEATHER_OPTIONS.find(w => w.id === weather)?.label}</span>}
               </p>
               <p className={`font-orbitron text-lg font-bold mb-1 ${getEffLabel(results.effectiveness).color}`}>
                 {getEffLabel(results.effectiveness).text}
@@ -519,26 +574,49 @@ export default function DamageCalc() {
                     <span>{results.minPct}% – {results.maxPct}%</span>
                   </div>
                   <div className="h-4 bg-[#1c2830] rounded-full overflow-hidden relative">
-                    <div className="h-full bg-yellow-400/30 rounded-full absolute" style={{ width: `${Math.min(results.maxPct, 100)}%` }} />
-                    <div className="h-full bg-yellow-400 rounded-full absolute" style={{ width: `${Math.min(results.minPct, 100)}%` }} />
+                    <div className="h-full bg-yellow-400/30 rounded-full absolute transition-all duration-500"
+                      style={{ width: `${Math.min(results.maxPct, 100)}%` }} />
+                    <div className="h-full bg-yellow-400 rounded-full absolute transition-all duration-500"
+                      style={{ width: `${Math.min(results.minPct, 100)}%` }} />
                   </div>
                 </div>
 
                 <div className="bg-[#111820] border border-[#1c2830] rounded-lg p-3 text-center">
                   <p className="font-mono-tech text-xs text-[#4a6070]">
                     Defender HP: <span className="text-white font-bold">{results.defenderHP}</span>
-                    {results.maxPct >= 100
-                      ? <span className="text-red-400 ml-2">— Guaranteed KO!</span>
-                      : results.minPct >= 100
-                        ? <span className="text-orange-400 ml-2">— Possible KO</span>
-                        : results.maxPct >= 50
-                          ? <span className="text-yellow-400 ml-2">— Heavy damage</span>
-                          : <span className="text-green-400 ml-2">— Survives</span>
-                    }
+                    <span className={`ml-2 font-bold ${getKOLabel(results.minPct, results.maxPct).color}`}>
+                      — {getKOLabel(results.minPct, results.maxPct).text}
+                    </span>
                   </p>
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* HISTORY */}
+      {history.length > 1 && (
+        <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-hidden">
+          <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830] flex items-center justify-between">
+            <h2 className="font-orbitron text-sm font-bold tracking-widest uppercase text-[#4a6070]">Recent Calculations</h2>
+            <button onClick={() => setHistory([])} className="font-mono-tech text-xs text-[#4a6070] hover:text-red-400 transition-colors">Clear</button>
+          </div>
+          <div className="divide-y divide-[#1c2830]">
+            {history.slice(1).map((h, i) => {
+              const ko = getKOLabel(h.minPct, h.maxPct)
+              return (
+                <div key={i} className="px-5 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="font-mono-tech text-xs text-white">
+                      {h.attackerName} → <span className="text-yellow-400">{h.moveName}</span> → {h.defenderName}
+                    </p>
+                    <p className="font-mono-tech text-xs text-[#4a6070] mt-0.5">{h.minPct}–{h.maxPct}% HP</p>
+                  </div>
+                  <span className={`font-mono-tech text-xs font-bold ${ko.color}`}>{ko.text}</span>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

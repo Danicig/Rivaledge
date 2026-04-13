@@ -1,20 +1,38 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TeamBuilder from './TeamBuilder'
 import Landing from './Landing'
 
 export default function App() {
   const [entered, setEntered] = useState(false)
   const [startTab, setStartTab] = useState('analysis')
+  const [visible, setVisible] = useState(true)
 
   function handleEnter(tab = 'analysis') {
-    setStartTab(tab)
-    setEntered(true)
+    setVisible(false)
+    setTimeout(() => {
+      setStartTab(tab)
+      setEntered(true)
+      setVisible(true)
+    }, 300)
   }
 
   function handleBack() {
-    setEntered(false)
+    setVisible(false)
+    setTimeout(() => {
+      setEntered(false)
+      setVisible(true)
+    }, 300)
   }
 
-  if (!entered) return <Landing onEnter={handleEnter} />
-  return <TeamBuilder startTab={startTab} onBack={handleBack} />
+  return (
+    <div
+      className="transition-opacity duration-300"
+      style={{ opacity: visible ? 1 : 0 }}
+    >
+      {!entered
+        ? <Landing onEnter={handleEnter} />
+        : <TeamBuilder startTab={startTab} onBack={handleBack} />
+      }
+    </div>
+  )
 }
