@@ -1,0 +1,415 @@
+// ─── RIVALEDGE TRANSLATION SYSTEM ───────────────────────────────────────────
+// Usage: import { t, getLang, setLang } from './lang'
+// t('key') returns the string in the current language
+// Pokémon names and competitive terms (STAB, Trick Room, etc.) stay in English
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TRANSLATIONS = {
+  es: {
+    // ── Global ────────────────────────────────────────────────────────────────
+    'lang.toggle':          'EN',
+    'nav.home':             '← Inicio',
+    'global.free':          'Gratis · Sin registro',
+    'global.copy':          'Copiar',
+    'global.copied':        '✓ Copiado',
+    'global.clear':         'Limpiar',
+    'global.reset':         'Reiniciar todo',
+    'global.analyze':       'Analizar',
+    'global.back':          '← Cambiar',
+    'global.open_tool':     'Abrir herramienta →',
+    'global.available_tools': 'Herramientas disponibles',
+    'global.scroll':        'scroll',
+    'global.regulation':    'POKEMON CHAMPIONS 2026 · REGULACIÓN M-A',
+    'global.footer':        'RIVALEDGE · Pokemon Champions 2026 · Fan-made · No afiliado con Nintendo o The Pokémon Company',
+    'global.active_until':  'Activo hasta Jun. 2026',
+    'global.source':        'Datos de showdowntier.com · 24.378 batallas · Abr 9–13, 2026',
+
+    // ── Landing ───────────────────────────────────────────────────────────────
+    'landing.tagline':      'La ventaja competitiva que tu rival no tiene.',
+    'landing.desc':         'Genera equipos, analiza rivales, calcula el daño y domina cada batalla en Pokémon Champions.',
+    'landing.cta':          'ENTRAR A LAS HERRAMIENTAS',
+    'landing.stat.pokemon': 'Pokémon disponibles',
+    'landing.stat.megas':   'Mega Evoluciones',
+    'landing.stat.tools':   'Herramientas',
+    'landing.stat.reg':     'Regulación activa',
+
+    // ── Tool names & descriptions ─────────────────────────────────────────────
+    'tool.generator.title': 'Team Generator',
+    'tool.generator.desc':  'Elige un estilo de juego y obtén un equipo meta al instante. Goodstuffs, Trick Room, Lluvia, Arena, Tailwind — basado en datos reales.',
+    'tool.analysis.title':  'Rival Analysis',
+    'tool.analysis.desc':   'Añade tu equipo y el del rival. Te decimos qué Pokémon llevar y el mejor lead pair.',
+    'tool.damage.title':    'Damage Calc',
+    'tool.damage.desc':     'Movepools reales de PokéAPI. Calcula rangos de daño exactos contra cualquier defensor.',
+    'tool.tierlist.title':  'Tier List',
+    'tool.tierlist.desc':   'Rankings del meta actual para Regulación M-A. Datos reales de más de 24.000 batallas.',
+    'tool.types.title':     'Type Chart',
+    'tool.types.desc':      'Tabla interactiva 18×18 de efectividad de tipos. Encuentra debilidades en segundos.',
+
+    // ── TeamBuilder header ────────────────────────────────────────────────────
+    'teambuilder.subtitle': 'Pokemon Champions 2026 · Análisis y construcción de equipos',
+
+    // ── TeamGenerator ─────────────────────────────────────────────────────────
+    'gen.title':            'TEAM GENERATOR',
+    'gen.desc':             'Elige un estilo de juego y formato. Te generamos un equipo meta basado en datos reales de batallas de Champions Reg M-A.',
+    'gen.choose':           'Elige tu estilo de juego:',
+    'gen.generate':         'Generar equipo →',
+    'gen.change':           '← Cambiar estilo',
+    'gen.copy':             'Copiar equipo',
+    'gen.your_team':        'Tu equipo',
+    'gen.reg':              '6 Pokémon · Reg M-A',
+    'gen.lead':             'Lead recomendado:',
+    'gen.source':           'Equipos basados en datos de showdowntier.com — 24.378 batallas Reg M-A, abril 2026. Ajusta EVs, naturalezas y objetos a tu estilo. Usa el Damage Calc para afinar matchups.',
+    'gen.difficulty.beginner':     'Principiante',
+    'gen.difficulty.intermediate': 'Intermedio',
+    'gen.difficulty.advanced':     'Avanzado',
+    'gen.doubles':          'Dobles 2v2',
+    'gen.singles':          'Singles 3v3',
+
+    // ── RivalAnalysis ─────────────────────────────────────────────────────────
+    'ra.doubles':           'Dobles — Llevar 4 de 6',
+    'ra.singles':           'Singles — Llevar 3 de 6',
+    'ra.my_team':           'Mi Equipo',
+    'ra.rival_team':        'Equipo Rival',
+    'ra.placeholder_my':    'Añadir Pokémon...',
+    'ra.placeholder_rival': 'Añadir Pokémon del rival...',
+    'ra.empty_my':          'Tu equipo está vacío',
+    'ra.empty_my_sub':      'Busca un Pokémon arriba para añadirlo',
+    'ra.empty_rival':       'El equipo rival está vacío',
+    'ra.empty_rival_sub':   'Añade su equipo para empezar el análisis',
+    'ra.weaknesses':        'Debilidades',
+    'ra.resistances':       'Resistencias',
+    'ra.immunities':        'Inmunidades',
+    'ra.none':              'Ninguna detectada',
+    'ra.analyze_doubles':   '⚡ ANALIZAR — MEJORES 4 A LLEVAR',
+    'ra.analyze_singles':   '⚡ ANALIZAR — MEJORES 3 A LLEVAR',
+    'ra.copy':              'Copiar resultado',
+    'ra.lead_title':        '⚡ LEAD PAIR RECOMENDADO',
+    'ra.lead_sub':          'Mejor sinergia y cobertura de tu top',
+    'ra.best_doubles':      'Mejores 4 a llevar — Dobles',
+    'ra.best_singles':      'Mejores 3 a llevar — Singles',
+    'ra.super_eff':         'SÚPER EFECTIVO CONTRA:',
+    'ra.threatened':        'AMENAZADO POR:',
+    'ra.neutral':           'Matchup neutral',
+    'ra.lead_badge':        'LEAD',
+
+    // ── DamageCalc ────────────────────────────────────────────────────────────
+    'dc.header':            'CALC DE DAÑO · Movepools de PokéAPI · Nivel 50',
+    'dc.reset':             'Reiniciar todo',
+    'dc.attacker':          'Atacante',
+    'dc.defender':          'Defensor',
+    'dc.move':              'Movimiento',
+    'dc.moves_count':       'movimientos',
+    'dc.filter_moves':      'Filtrar movimientos...',
+    'dc.all':               'Todos',
+    'dc.physical':          'Físico',
+    'dc.special':           'Especial',
+    'dc.select_attacker':   'Selecciona un atacante primero',
+    'dc.not_found':         'Atacante no encontrado',
+    'dc.loading':           'Cargando...',
+    'dc.loading_moves':     'Cargando movimientos...',
+    'dc.no_moves':          'No se encontraron movimientos',
+    'dc.api_error':         '⚠️ Pokémon no encontrado en PokéAPI. Prueba con el nombre base en inglés.',
+    'dc.remove':            '× Quitar',
+    'dc.advanced':          '⚙️ Opciones avanzadas — Naturalezas, Objetos y Clima',
+    'dc.atk_evs':           'EVs de Ataque:',
+    'dc.def_evs':           'EVs de Defensa:',
+    'dc.nature':            'Naturaleza',
+    'dc.item':              'Objeto',
+    'dc.weather':           'CLIMA',
+    'dc.weather.clear':     '☀️ Despejado',
+    'dc.weather.sun':       '🌞 Sol Intenso',
+    'dc.weather.rain':      '🌧️ Lluvia',
+    'dc.weather.sand':      '🏜️ Tormenta de Arena',
+    'dc.weather.snow':      '❄️ Nieve',
+    'dc.calculate':         '⚡ CALCULAR DAÑO',
+    'dc.result':            'Resultado',
+    'dc.copy_result':       'Copiar resultado',
+    'dc.min_damage':        'DAÑO MÍNIMO',
+    'dc.max_damage':        'DAÑO MÁXIMO',
+    'dc.damage_range':      'Rango de daño',
+    'dc.defender_hp':       'HP del defensor:',
+    'dc.guaranteed_ko':     '— ¡KO garantizado!',
+    'dc.possible_ko':       '— KO posible',
+    'dc.two_hko':           '— Rango de 2HKO',
+    'dc.survives':          '— Sobrevive',
+    'dc.history':           'Cálculos recientes',
+    'dc.stab':              '(STAB)',
+
+    // ── TierList ──────────────────────────────────────────────────────────────
+    'tl.doubles':           'Dobles 2v2',
+    'tl.singles':           'Singles 3v3',
+    'tl.doubles_title':     'TIER LIST DOBLES',
+    'tl.singles_title':     'TIER LIST SINGLES',
+    'tl.source_doubles':    'Datos: showdowntier.com · 24.378 batallas · Abr 9–13, 2026 · Rating medio 1166',
+    'tl.source_singles':    'Champions Lab ladder Singles 3v3 · Actualizado Abr 13, 2026',
+    'tl.search':            'Buscar Pokémon...',
+    'tl.no_results':        'No se encontraron Pokémon para',
+    'tl.pokemon_count':     'Pokémon',
+    'tl.usage':             'uso',
+    'tl.win':               'victoria',
+    'tl.source_note':       '📊 Datos Dobles de showdowntier.com — 24.378 batallas Reg M-A, Abril 9–13 2026, rating medio 1166. Todos los Pokémon confirmados legales en Champions.',
+    'tl.ban_note':          '⚠️ Los Pokémon Paradoja y los Tesoros de la Ruina están prohibidos en Regulación M-A. Cualquier tier list que incluya Flutter Mane, Iron Hands, Chi-Yu o Chien-Pao es de otro formato.',
+    'tl.role.all':          'Todos',
+
+    // ── TypeChart ─────────────────────────────────────────────────────────────
+    'tc.header':            'EFECTIVIDAD DE TIPOS · Filas = Atacante · Columnas = Defensor',
+    'tc.clear_filter':      '× Limpiar filtro',
+    'tc.filter_label':      'Filtrar por tipo atacante:',
+    'tc.hint':              'Clic en un tipo para filtrar · Hover para detalles',
+
+    // ── LeadOptimizer ─────────────────────────────────────────────────────────
+    'lo.title':             'LEAD OPTIMIZER',
+    'lo.desc':              'Añade tu equipo y el preview del rival. Clasificamos todos los pares de lead posibles por sinergia de tipos y cobertura.',
+    'lo.my_team':           'Mi Equipo',
+    'lo.rival':             'Preview Rival',
+    'lo.placeholder_my':    'Añadir tu Pokémon...',
+    'lo.placeholder_rival': 'Añadir Pokémon rival...',
+    'lo.empty_my':          'Tu equipo está vacío',
+    'lo.empty_my_sub':      'Añade al menos 2 Pokémon para analizar',
+    'lo.empty_rival':       'El equipo rival está vacío',
+    'lo.empty_rival_sub':   'Añade su preview para empezar',
+    'lo.analyze':           '⚡ ENCONTRAR MEJOR LEAD PAIR',
+    'lo.results_title':     'Mejores Lead Pairs — Clasificados',
+    'lo.copy':              'Copiar mejor lead',
+    'lo.coverage':          'COBERTURA VS RIVAL:',
+    'lo.watch_out':         'OJO CON:',
+    'lo.recommended':       '⚡ LEAD RECOMENDADO — Mejor sinergia de tipos y cobertura contra este equipo rival',
+
+    // ── PokemonSearch ─────────────────────────────────────────────────────────
+    'ps.placeholder':       'Buscar Pokémon...',
+    'ps.max_reached':       'Equipo completo',
+    'ps.not_found':         'No encontrado — Añadir manualmente',
+    'ps.not_found_short':   'Sin resultados — Añadir manualmente',
+    'ps.add_manually':      'ADD MANUALLY',
+    'ps.name_placeholder':  'Nombre del Pokémon',
+    'ps.select_types':      'SELECCIONAR TIPOS (máx 2):',
+    'ps.add_button':        'Añadir Pokémon',
+    'ps.cancel':            'Cancelar',
+    'ps.choose_types':      'Elegir tipos →',
+  },
+
+  en: {
+    // ── Global ────────────────────────────────────────────────────────────────
+    'lang.toggle':          'ES',
+    'nav.home':             '← Home',
+    'global.free':          'Free · No sign up required',
+    'global.copy':          'Copy',
+    'global.copied':        '✓ Copied',
+    'global.clear':         'Clear',
+    'global.reset':         'Reset all',
+    'global.analyze':       'Analyze',
+    'global.back':          '← Change',
+    'global.open_tool':     'Open tool →',
+    'global.available_tools': 'Available tools',
+    'global.scroll':        'scroll',
+    'global.regulation':    'POKEMON CHAMPIONS 2026 · REGULATION M-A',
+    'global.footer':        'RIVALEDGE · Pokemon Champions 2026 · Fan-made · Not affiliated with Nintendo or The Pokémon Company',
+    'global.active_until':  'Active until Jun. 2026',
+    'global.source':        'Data from showdowntier.com · 24,378 battles · Apr 9–13, 2026',
+
+    // ── Landing ───────────────────────────────────────────────────────────────
+    'landing.tagline':      'The competitive edge your rival doesn\'t have.',
+    'landing.desc':         'Generate teams, analyze rivals, calculate damage and dominate every battle in Pokémon Champions.',
+    'landing.cta':          'ENTER THE TOOLS',
+    'landing.stat.pokemon': 'Available Pokémon',
+    'landing.stat.megas':   'Mega Evolutions',
+    'landing.stat.tools':   'Tools',
+    'landing.stat.reg':     'Active Regulation',
+
+    // ── Tool names & descriptions ─────────────────────────────────────────────
+    'tool.generator.title': 'Team Generator',
+    'tool.generator.desc':  'Pick a playstyle and get a full meta team instantly. Goodstuffs, Trick Room, Rain, Sand, Tailwind — based on real battle data.',
+    'tool.analysis.title':  'Rival Analysis',
+    'tool.analysis.desc':   'Add your team and the rival\'s. We tell you which Pokémon to bring and the best lead pair.',
+    'tool.damage.title':    'Damage Calc',
+    'tool.damage.desc':     'Real movepools from PokéAPI. Calculate exact damage ranges against any defender.',
+    'tool.tierlist.title':  'Tier List',
+    'tool.tierlist.desc':   'Current meta rankings for Regulation M-A. Real data from 24,000+ battles.',
+    'tool.types.title':     'Type Chart',
+    'tool.types.desc':      'Full 18×18 interactive type effectiveness table. Find weaknesses in seconds.',
+
+    // ── TeamBuilder header ────────────────────────────────────────────────────
+    'teambuilder.subtitle': 'Pokemon Champions 2026 · Competitive Team Builder & Analysis',
+
+    // ── TeamGenerator ─────────────────────────────────────────────────────────
+    'gen.title':            'TEAM GENERATOR',
+    'gen.desc':             'Pick a playstyle and format. We\'ll generate a meta team based on real Champions Reg M-A battle data.',
+    'gen.choose':           'Choose your playstyle:',
+    'gen.generate':         'Generate team →',
+    'gen.change':           '← Change playstyle',
+    'gen.copy':             'Copy team',
+    'gen.your_team':        'Your Team',
+    'gen.reg':              '6 Pokémon · Reg M-A',
+    'gen.lead':             'Recommended lead:',
+    'gen.source':           'Teams based on showdowntier.com data — 24,378 Reg M-A battles, April 2026. Adjust EVs, natures and items to your playstyle. Use Damage Calc to fine-tune matchups.',
+    'gen.difficulty.beginner':     'Beginner',
+    'gen.difficulty.intermediate': 'Intermediate',
+    'gen.difficulty.advanced':     'Advanced',
+    'gen.doubles':          'Doubles 2v2',
+    'gen.singles':          'Singles 3v3',
+
+    // ── RivalAnalysis ─────────────────────────────────────────────────────────
+    'ra.doubles':           'Doubles — Pick 4 of 6',
+    'ra.singles':           'Singles — Pick 3 of 6',
+    'ra.my_team':           'My Team',
+    'ra.rival_team':        'Rival Team',
+    'ra.placeholder_my':    'Add your Pokémon...',
+    'ra.placeholder_rival': 'Add rival Pokémon...',
+    'ra.empty_my':          'Your team is empty',
+    'ra.empty_my_sub':      'Search a Pokémon above to add it',
+    'ra.empty_rival':       'Rival team is empty',
+    'ra.empty_rival_sub':   'Add their team to start the analysis',
+    'ra.weaknesses':        'Weaknesses',
+    'ra.resistances':       'Resistances',
+    'ra.immunities':        'Immunities',
+    'ra.none':              'None detected',
+    'ra.analyze_doubles':   '⚡ ANALYZE — BEST 4 TO BRING',
+    'ra.analyze_singles':   '⚡ ANALYZE — BEST 3 TO BRING',
+    'ra.copy':              'Copy results',
+    'ra.lead_title':        '⚡ RECOMMENDED LEAD PAIR',
+    'ra.lead_sub':          'Best synergy and coverage from your top',
+    'ra.best_doubles':      'Best 4 to Bring — Doubles',
+    'ra.best_singles':      'Best 3 to Bring — Singles',
+    'ra.super_eff':         'SUPER EFFECTIVE AGAINST:',
+    'ra.threatened':        'THREATENED BY:',
+    'ra.neutral':           'Neutral matchup',
+    'ra.lead_badge':        'LEAD',
+
+    // ── DamageCalc ────────────────────────────────────────────────────────────
+    'dc.header':            'DAMAGE CALC · PokéAPI movepools · Level 50',
+    'dc.reset':             'Reset all',
+    'dc.attacker':          'Attacker',
+    'dc.defender':          'Defender',
+    'dc.move':              'Move',
+    'dc.moves_count':       'moves',
+    'dc.filter_moves':      'Filter moves...',
+    'dc.all':               'All',
+    'dc.physical':          'Physical',
+    'dc.special':           'Special',
+    'dc.select_attacker':   'Select an attacker first',
+    'dc.not_found':         'Attacker not found',
+    'dc.loading':           'Loading...',
+    'dc.loading_moves':     'Loading moves...',
+    'dc.no_moves':          'No moves found',
+    'dc.api_error':         '⚠️ Pokémon not found in PokéAPI. Try its base English name.',
+    'dc.remove':            '× Remove',
+    'dc.advanced':          '⚙️ Advanced Options — Natures, Items & Weather',
+    'dc.atk_evs':           'Attack EVs:',
+    'dc.def_evs':           'Defense EVs:',
+    'dc.nature':            'Nature',
+    'dc.item':              'Held Item',
+    'dc.weather':           'WEATHER',
+    'dc.weather.clear':     '☀️ Clear',
+    'dc.weather.sun':       '🌞 Harsh Sun',
+    'dc.weather.rain':      '🌧️ Rain',
+    'dc.weather.sand':      '🏜️ Sandstorm',
+    'dc.weather.snow':      '❄️ Snow',
+    'dc.calculate':         '⚡ CALCULATE DAMAGE',
+    'dc.result':            'Result',
+    'dc.copy_result':       'Copy result',
+    'dc.min_damage':        'MIN DAMAGE',
+    'dc.max_damage':        'MAX DAMAGE',
+    'dc.damage_range':      'Damage range',
+    'dc.defender_hp':       'Defender HP:',
+    'dc.guaranteed_ko':     '— Guaranteed KO!',
+    'dc.possible_ko':       '— Possible KO',
+    'dc.two_hko':           '— 2HKO range',
+    'dc.survives':          '— Survives',
+    'dc.history':           'Recent Calculations',
+    'dc.stab':              '(STAB)',
+
+    // ── TierList ──────────────────────────────────────────────────────────────
+    'tl.doubles':           'Doubles 2v2',
+    'tl.singles':           'Singles 3v3',
+    'tl.doubles_title':     'DOUBLES TIER LIST',
+    'tl.singles_title':     'SINGLES TIER LIST',
+    'tl.source_doubles':    'Data: showdowntier.com · 24,378 battles · Apr 9–13, 2026 · Avg rating 1166',
+    'tl.source_singles':    'Champions Lab 3v3 Singles ladder · Updated Apr 13, 2026',
+    'tl.search':            'Search Pokémon...',
+    'tl.no_results':        'No Pokémon found for',
+    'tl.pokemon_count':     'Pokémon',
+    'tl.usage':             'use',
+    'tl.win':               'win',
+    'tl.source_note':       '📊 Doubles data from showdowntier.com — 24,378 Reg M-A battles, April 9–13 2026, avg rating 1166. All Pokémon confirmed legal in Champions.',
+    'tl.ban_note':          '⚠️ Paradox Pokémon and Treasures of Ruin are banned in Regulation M-A. Any tier list including Flutter Mane, Iron Hands, Chi-Yu or Chien-Pao is from a different format.',
+    'tl.role.all':          'All',
+
+    // ── TypeChart ─────────────────────────────────────────────────────────────
+    'tc.header':            'TYPE EFFECTIVENESS · Rows = Attacking · Columns = Defending',
+    'tc.clear_filter':      '× Clear filter',
+    'tc.filter_label':      'Filter by attacking type:',
+    'tc.hint':              'Click any type label to filter · Hover cells for details',
+
+    // ── LeadOptimizer ─────────────────────────────────────────────────────────
+    'lo.title':             'LEAD OPTIMIZER',
+    'lo.desc':              'Add your team and the rival\'s preview. We\'ll rank every possible lead pair by type synergy and coverage.',
+    'lo.my_team':           'My Team',
+    'lo.rival':             'Rival Preview',
+    'lo.placeholder_my':    'Add your Pokémon...',
+    'lo.placeholder_rival': 'Add rival Pokémon...',
+    'lo.empty_my':          'Your team is empty',
+    'lo.empty_my_sub':      'Add at least 2 Pokémon to analyze',
+    'lo.empty_rival':       'Rival team is empty',
+    'lo.empty_rival_sub':   'Add their preview to start',
+    'lo.analyze':           '⚡ FIND BEST LEAD PAIR',
+    'lo.results_title':     'Best Lead Pairs — Ranked',
+    'lo.copy':              'Copy best lead',
+    'lo.coverage':          'COVERAGE VS RIVAL:',
+    'lo.watch_out':         'WATCH OUT FOR:',
+    'lo.recommended':       '⚡ RECOMMENDED LEAD — Best type synergy and coverage against this rival team',
+
+    // ── PokemonSearch ─────────────────────────────────────────────────────────
+    'ps.placeholder':       'Search Pokémon...',
+    'ps.max_reached':       'Team is full',
+    'ps.not_found':         'No results — Add manually',
+    'ps.not_found_short':   'Not found — Add manually',
+    'ps.add_manually':      'ADD MANUALLY',
+    'ps.name_placeholder':  'Pokémon name',
+    'ps.select_types':      'SELECT TYPES (max 2):',
+    'ps.add_button':        'Add Pokémon',
+    'ps.cancel':            'Cancel',
+    'ps.choose_types':      'Choose types →',
+  },
+}
+
+// ─── LANG STATE ──────────────────────────────────────────────────────────────
+
+let currentLang = localStorage.getItem('rivaledge_lang') || 'es'
+const listeners = new Set()
+
+export function getLang() {
+  return currentLang
+}
+
+export function setLang(lang) {
+  currentLang = lang
+  localStorage.setItem('rivaledge_lang', lang)
+  listeners.forEach(fn => fn(lang))
+}
+
+export function toggleLang() {
+  setLang(currentLang === 'es' ? 'en' : 'es')
+}
+
+export function onLangChange(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
+
+export function t(key) {
+  return TRANSLATIONS[currentLang]?.[key] ?? TRANSLATIONS['en']?.[key] ?? key
+}
+
+// ─── REACT HOOK ──────────────────────────────────────────────────────────────
+
+import { useState, useEffect } from 'react'
+
+export function useLang() {
+  const [lang, setLangState] = useState(getLang())
+
+  useEffect(() => {
+    return onLangChange(l => setLangState(l))
+  }, [])
+
+  return { lang, setLang, toggleLang, t }
+}
