@@ -7,7 +7,7 @@
 const TRANSLATIONS = {
   es: {
     // ── Global ────────────────────────────────────────────────────────────────
-    'lang.toggle':          'EN',
+    'lang.current':         'es',
     'nav.home':             '← Inicio',
     'global.free':          'Gratis · Sin registro',
     'global.copy':          'Copiar',
@@ -180,7 +180,7 @@ const TRANSLATIONS = {
     'ps.max_reached':       'Equipo completo',
     'ps.not_found':         'No encontrado — Añadir manualmente',
     'ps.not_found_short':   'Sin resultados — Añadir manualmente',
-    'ps.add_manually':      'ADD MANUALLY',
+    'ps.add_manually':      'AÑADIR MANUALMENTE',
     'ps.name_placeholder':  'Nombre del Pokémon',
     'ps.select_types':      'SELECCIONAR TIPOS (máx 2):',
     'ps.add_button':        'Añadir Pokémon',
@@ -190,7 +190,7 @@ const TRANSLATIONS = {
 
   en: {
     // ── Global ────────────────────────────────────────────────────────────────
-    'lang.toggle':          'ES',
+    'lang.current':         'en',
     'nav.home':             '← Home',
     'global.free':          'Free · No sign up required',
     'global.copy':          'Copy',
@@ -377,9 +377,7 @@ const TRANSLATIONS = {
 let currentLang = localStorage.getItem('rivaledge_lang') || 'es'
 const listeners = new Set()
 
-export function getLang() {
-  return currentLang
-}
+export function getLang() { return currentLang }
 
 export function setLang(lang) {
   currentLang = lang

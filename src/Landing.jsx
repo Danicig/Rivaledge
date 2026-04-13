@@ -38,6 +38,19 @@ function StatCard({ value, label, isNumber, animate }) {
   )
 }
 
+function LangToggle({ lang }) {
+  return (
+    <button
+      onClick={toggleLang}
+      className="flex items-center gap-1 border border-[#1c2830] hover:border-yellow-400/30 px-3 py-1.5 rounded-lg transition-colors"
+    >
+      <span className="font-mono-tech text-xs transition-all" style={{ color: lang === 'es' ? '#f0c040' : '#4a6070' }}>ES</span>
+      <span className="font-mono-tech text-xs text-[#2a3840]">|</span>
+      <span className="font-mono-tech text-xs transition-all" style={{ color: lang === 'en' ? '#f0c040' : '#4a6070' }}>EN</span>
+    </button>
+  )
+}
+
 export default function Landing({ onEnter }) {
   const { t, lang } = useLang()
   const [visible, setVisible] = useState(false)
@@ -46,15 +59,13 @@ export default function Landing({ onEnter }) {
   const statsRef = useRef(null)
 
   const STATS = [
-    { value: 187,  labelKey: 'landing.stat.pokemon', isNumber: true },
-    { value: 59,   labelKey: 'landing.stat.megas',   isNumber: true },
-    { value: 5,    labelKey: 'landing.stat.tools',   isNumber: true },
-    { value: 'M-A', labelKey: 'landing.stat.reg',   isNumber: false },
+    { value: 187,   labelKey: 'landing.stat.pokemon', isNumber: true },
+    { value: 59,    labelKey: 'landing.stat.megas',   isNumber: true },
+    { value: 5,     labelKey: 'landing.stat.tools',   isNumber: true },
+    { value: 'M-A', labelKey: 'landing.stat.reg',     isNumber: false },
   ]
 
-  useEffect(() => {
-    setTimeout(() => setVisible(true), 100)
-  }, [])
+  useEffect(() => { setTimeout(() => setVisible(true), 100) }, [])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -75,17 +86,14 @@ export default function Landing({ onEnter }) {
           backgroundSize: '60px 60px'
         }} />
 
-      {/* Top radial glow */}
+      {/* Top glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none"
         style={{ background: 'radial-gradient(ellipse, rgba(240,192,64,0.08) 0%, transparent 70%)' }} />
 
       {/* Lang toggle */}
-      <button
-        onClick={toggleLang}
-        className="absolute top-4 right-4 z-20 font-mono-tech text-xs text-[#4a6070] hover:text-yellow-400 transition-colors border border-[#1c2830] hover:border-yellow-400/30 px-3 py-1.5 rounded-lg"
-      >
-        {t('lang.toggle')}
-      </button>
+      <div className="absolute top-4 right-4 z-20">
+        <LangToggle lang={lang} />
+      </div>
 
       {/* Hero */}
       <div className={`relative z-10 flex flex-col items-center justify-center px-6 pt-24 pb-16 text-center transition-all duration-1000 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
@@ -99,12 +107,8 @@ export default function Landing({ onEnter }) {
           RIVAL<span className="text-yellow-400" style={{ textShadow: '0 0 40px rgba(240,192,64,0.5)' }}>EDGE</span>
         </h1>
 
-        <p className="font-mono-tech text-lg text-[#8899aa] mb-4 tracking-wide max-w-xl">
-          {t('landing.tagline')}
-        </p>
-        <p className="text-[#4a6070] text-sm max-w-lg mb-12 leading-relaxed">
-          {t('landing.desc')}
-        </p>
+        <p className="font-mono-tech text-lg text-[#8899aa] mb-4 tracking-wide max-w-xl">{t('landing.tagline')}</p>
+        <p className="text-[#4a6070] text-sm max-w-lg mb-12 leading-relaxed">{t('landing.desc')}</p>
 
         <button
           onClick={() => onEnter('generator')}
@@ -124,10 +128,8 @@ export default function Landing({ onEnter }) {
       </div>
 
       {/* Stats */}
-      <div
-        ref={statsRef}
-        className={`relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto px-6 mb-16 transition-all duration-1000 delay-200 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-      >
+      <div ref={statsRef}
+        className={`relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto px-6 mb-16 transition-all duration-1000 delay-200 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         {STATS.map(s => (
           <StatCard key={s.labelKey} value={s.value} label={t(s.labelKey)} isNumber={s.isNumber} animate={statsVisible} />
         ))}
@@ -138,8 +140,7 @@ export default function Landing({ onEnter }) {
         <p className="font-mono-tech text-xs text-[#4a6070] tracking-widest uppercase text-center mb-8">{t('global.available_tools')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {TOOLS.map((tool, i) => (
-            <div
-              key={tool.id}
+            <div key={tool.id}
               onMouseEnter={() => setHoveredTool(tool.id)}
               onMouseLeave={() => setHoveredTool(null)}
               onClick={() => onEnter(tool.id)}
@@ -148,8 +149,7 @@ export default function Landing({ onEnter }) {
                 transitionDelay: `${i * 60}ms`,
                 boxShadow: hoveredTool === tool.id ? `0 0 24px ${tool.accentColor}` : 'none',
                 transform: hoveredTool === tool.id ? 'scale(1.02) translateY(-2px)' : 'scale(1) translateY(0)',
-              }}
-            >
+              }}>
               <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl transition-all duration-300"
                 style={{ background: tool.color, opacity: hoveredTool === tool.id ? 1 : 0.3, boxShadow: hoveredTool === tool.id ? `0 0 8px ${tool.accentColor}` : 'none' }} />
               <div className="flex items-start gap-4">
@@ -160,9 +160,7 @@ export default function Landing({ onEnter }) {
                 </div>
               </div>
               <div className="mt-4">
-                <span className="font-mono-tech text-xs tracking-widest uppercase transition-all duration-300" style={{ color: tool.color }}>
-                  {t('global.open_tool')}
-                </span>
+                <span className="font-mono-tech text-xs tracking-widest uppercase" style={{ color: tool.color }}>{t('global.open_tool')}</span>
               </div>
             </div>
           ))}
