@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { POKEDEX, TIPOS, TIPO_COLORS } from './data'
+import { POKEDEX, TIPOS, TIPO_COLORS, getSpriteUrl } from './data'
 import TypeBadge from './TypeBadge'
 import { useLang } from './lang'
 
@@ -15,6 +15,21 @@ function HighlightMatch({ text, query }) {
       <span className="text-yellow-400">{text.slice(idx, idx + query.length)}</span>
       {text.slice(idx + query.length)}
     </span>
+  )
+}
+
+function PokemonSprite({ pokemon, size = 40 }) {
+  const url = getSpriteUrl(pokemon.spriteId)
+  if (!url) return null
+  return (
+    <img
+      src={url}
+      alt={pokemon.name}
+      width={size}
+      height={size}
+      style={{ imageRendering: 'pixelated', flexShrink: 0 }}
+      onError={e => { e.target.style.display = 'none' }}
+    />
   )
 }
 
@@ -96,8 +111,11 @@ export default function PokemonSearch({ onAdd, maxReached, placeholder }) {
         <div className="absolute z-[999] top-full mt-1 left-0 right-0 bg-[#111820] border border-[#243040] rounded-lg shadow-2xl overflow-y-auto max-h-64">
           {results.map((p, i) => (
             <div key={p.name} onClick={() => handleAdd(p)} onMouseEnter={() => setActiveIdx(i)}
-              className={`flex items-center justify-between px-4 py-2.5 cursor-pointer border-b border-[#1c2830] last:border-0 transition-colors ${activeIdx === i ? 'bg-yellow-400/10' : 'hover:bg-[#161e28]'}`}>
-              <span className="text-white font-semibold"><HighlightMatch text={p.name} query={query} /></span>
+              className={`flex items-center justify-between px-3 py-2 cursor-pointer border-b border-[#1c2830] last:border-0 transition-colors ${activeIdx === i ? 'bg-yellow-400/10' : 'hover:bg-[#161e28]'}`}>
+              <div className="flex items-center gap-2">
+                <PokemonSprite pokemon={p} size={36} />
+                <span className="text-white font-semibold"><HighlightMatch text={p.name} query={query} /></span>
+              </div>
               <div className="flex gap-1">{p.types.map(type => <TypeBadge key={type} type={type} />)}</div>
             </div>
           ))}

@@ -4,7 +4,8 @@ import { useLang, toggleLang } from './lang'
 const TOOLS = [
   { id: 'generator', icon: '🧬', titleKey: 'tool.generator.title', descKey: 'tool.generator.desc', color: '#aa44ff', border: 'border-purple-400/30', bg: 'bg-purple-400/5', accentColor: 'rgba(170,68,255,0.5)' },
   { id: 'analysis',  icon: '⚔️', titleKey: 'tool.analysis.title',  descKey: 'tool.analysis.desc',  color: '#f0c040', border: 'border-yellow-400/30', bg: 'bg-yellow-400/5', accentColor: 'rgba(240,192,64,0.5)' },
-  { id: 'damage',    icon: '💥', titleKey: 'tool.damage.title',    descKey: 'tool.damage.desc',    color: '#ff4422', border: 'border-red-400/30',    bg: 'bg-red-400/5',    accentColor: 'rgba(255,68,34,0.5)' },
+  { id: 'ingame',    icon: '⚡', titleKey: 'tool.ingame.title',    descKey: 'tool.ingame.desc',    color: '#ff4422', border: 'border-red-400/30',    bg: 'bg-red-400/5',    accentColor: 'rgba(255,68,34,0.5)' },
+  { id: 'damage',    icon: '💥', titleKey: 'tool.damage.title',    descKey: 'tool.damage.desc',    color: '#ff8844', border: 'border-orange-400/30', bg: 'bg-orange-400/5', accentColor: 'rgba(255,136,68,0.5)' },
   { id: 'tierlist',  icon: '📊', titleKey: 'tool.tierlist.title',  descKey: 'tool.tierlist.desc',  color: '#33aaff', border: 'border-blue-400/30',   bg: 'bg-blue-400/5',   accentColor: 'rgba(51,170,255,0.5)' },
   { id: 'types',     icon: '🔷', titleKey: 'tool.types.title',     descKey: 'tool.types.desc',     color: '#33aa33', border: 'border-green-400/30',  bg: 'bg-green-400/5',  accentColor: 'rgba(51,170,51,0.5)' },
 ]
@@ -40,10 +41,8 @@ function StatCard({ value, label, isNumber, animate }) {
 
 function LangToggle({ lang }) {
   return (
-    <button
-      onClick={toggleLang}
-      className="flex items-center gap-1 border border-[#1c2830] hover:border-yellow-400/30 px-3 py-1.5 rounded-lg transition-colors"
-    >
+    <button onClick={toggleLang}
+      className="flex items-center gap-1 border border-[#1c2830] hover:border-yellow-400/30 px-3 py-1.5 rounded-lg transition-colors">
       <span className="font-mono-tech text-xs transition-all" style={{ color: lang === 'es' ? '#f0c040' : '#4a6070' }}>ES</span>
       <span className="font-mono-tech text-xs text-[#2a3840]">|</span>
       <span className="font-mono-tech text-xs transition-all" style={{ color: lang === 'en' ? '#f0c040' : '#4a6070' }}>EN</span>
@@ -61,7 +60,7 @@ export default function Landing({ onEnter }) {
   const STATS = [
     { value: 187,   labelKey: 'landing.stat.pokemon', isNumber: true },
     { value: 59,    labelKey: 'landing.stat.megas',   isNumber: true },
-    { value: 5,     labelKey: 'landing.stat.tools',   isNumber: true },
+    { value: 6,     labelKey: 'landing.stat.tools',   isNumber: true },
     { value: 'M-A', labelKey: 'landing.stat.reg',     isNumber: false },
   ]
 
@@ -79,14 +78,11 @@ export default function Landing({ onEnter }) {
   return (
     <div className="min-h-screen bg-[#06080a] text-white overflow-hidden relative">
 
-      {/* Grid background */}
       <div className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage: `linear-gradient(rgba(240,192,64,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(240,192,64,0.03) 1px, transparent 1px)`,
           backgroundSize: '60px 60px'
         }} />
-
-      {/* Top glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none"
         style={{ background: 'radial-gradient(ellipse, rgba(240,192,64,0.08) 0%, transparent 70%)' }} />
 
@@ -97,7 +93,6 @@ export default function Landing({ onEnter }) {
 
       {/* Hero */}
       <div className={`relative z-10 flex flex-col items-center justify-center px-6 pt-24 pb-16 text-center transition-all duration-1000 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-
         <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/30 rounded-full px-4 py-1.5 mb-8">
           <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
           <span className="font-mono-tech text-xs text-yellow-400 tracking-widest uppercase">{t('global.regulation')}</span>
@@ -110,11 +105,9 @@ export default function Landing({ onEnter }) {
         <p className="font-mono-tech text-lg text-[#8899aa] mb-4 tracking-wide max-w-xl">{t('landing.tagline')}</p>
         <p className="text-[#4a6070] text-sm max-w-lg mb-12 leading-relaxed">{t('landing.desc')}</p>
 
-        <button
-          onClick={() => onEnter('generator')}
+        <button onClick={() => onEnter('generator')}
           className="group relative px-12 py-4 bg-yellow-400 text-black font-orbitron font-black text-sm tracking-widest uppercase rounded-xl transition-all duration-300 hover:scale-105 active:scale-100 mb-4 overflow-hidden"
-          style={{ boxShadow: '0 0 40px rgba(240,192,64,0.4)' }}
-        >
+          style={{ boxShadow: '0 0 40px rgba(240,192,64,0.4)' }}>
           <span className="relative z-10">{t('landing.cta')}</span>
           <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12" />
         </button>
@@ -155,7 +148,12 @@ export default function Landing({ onEnter }) {
               <div className="flex items-start gap-4">
                 <div className="text-3xl">{tool.icon}</div>
                 <div>
-                  <h3 className="font-orbitron text-base font-bold text-white mb-2">{t(tool.titleKey)}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-orbitron text-base font-bold text-white">{t(tool.titleKey)}</h3>
+                    {tool.id === 'ingame' && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                    )}
+                  </div>
                   <p className="text-sm text-[#8899aa] leading-relaxed">{t(tool.descKey)}</p>
                 </div>
               </div>

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import TeamBuilder from './TeamBuilder'
 import Landing from './Landing'
+import { TeamProvider } from './TeamContext'
 
 export default function App() {
   const [entered, setEntered] = useState(false)
@@ -25,14 +26,13 @@ export default function App() {
   }
 
   return (
-    <div
-      className="transition-opacity duration-300"
-      style={{ opacity: visible ? 1 : 0 }}
-    >
-      {!entered
-        ? <Landing onEnter={handleEnter} />
-        : <TeamBuilder startTab={startTab} onBack={handleBack} />
-      }
-    </div>
+    <TeamProvider>
+      <div className="transition-opacity duration-300" style={{ opacity: visible ? 1 : 0 }}>
+        {!entered
+          ? <Landing onEnter={handleEnter} />
+          : <TeamBuilder startTab={startTab} onBack={handleBack} />
+        }
+      </div>
+    </TeamProvider>
   )
 }
