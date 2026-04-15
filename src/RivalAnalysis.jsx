@@ -15,6 +15,16 @@ function PokemonSprite({ pokemon, size = 48 }) {
   )
 }
 
+function PokemonSprite({ pokemon, size = 48 }) {
+  const url = getSpriteUrl(pokemon.spriteId)
+  if (!url) return null
+  return (
+    <img src={url} alt={pokemon.name} width={size} height={size}
+      style={{ imageRendering: 'pixelated', flexShrink: 0 }}
+      onError={e => { e.target.style.display = 'none' }} />
+  )
+}
+
 export default function RivalAnalysis() {
   const { t } = useLang()
   const { myTeam, addPokemon, removePokemon, clearTeam } = useTeam()
@@ -27,9 +37,18 @@ export default function RivalAnalysis() {
 
   const bringCount = format === 'doubles' ? 4 : 3
 
+<<<<<<< HEAD
   function addToRival(p)  { if (rival.length >= 6 || rival.find(x => x.name === p.name)) return; setRival([...rival, p]); setAnalyzed(false) }
   function removeRival(name) { setRival(rival.filter(p => p.name !== name)); setAnalyzed(false) }
   function clearRival()      { setRival([]); setAnalyzed(false) }
+=======
+  function addToMyTeam(p) { if (myTeam.length >= 6 || myTeam.find(x => x.name === p.name)) return; setMyTeam([...myTeam, p]); setAnalyzed(false) }
+  function addToRival(p)  { if (rival.length >= 6 || rival.find(x => x.name === p.name)) return; setRival([...rival, p]); setAnalyzed(false) }
+  function removeMyTeam(name) { setMyTeam(myTeam.filter(p => p.name !== name)); setAnalyzed(false) }
+  function removeRival(name)  { setRival(rival.filter(p => p.name !== name)); setAnalyzed(false) }
+  function clearMyTeam()      { setMyTeam([]); setAnalyzed(false) }
+  function clearRival()       { setRival([]); setAnalyzed(false) }
+>>>>>>> a2ff58b2a17a9f1436d8768ab333a5c84cd39ef2
 
   function getTeamWeaknesses() {
     const counts = {}
@@ -136,6 +155,7 @@ export default function RivalAnalysis() {
 
       {/* Teams */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+<<<<<<< HEAD
 
         {/* My Team — usa contexto global */}
         <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-visible">
@@ -209,6 +229,46 @@ export default function RivalAnalysis() {
             </div>
           </div>
         </div>
+=======
+        {[
+          { team: myTeam, addFn: addToMyTeam, removeFn: removeMyTeam, clearFn: clearMyTeam, labelKey: 'ra.my_team', phKey: 'ra.placeholder_my', emptyKey: 'ra.empty_my', emptySubKey: 'ra.empty_my_sub', isRival: false },
+          { team: rival,  addFn: addToRival,  removeFn: removeRival,  clearFn: clearRival,  labelKey: 'ra.rival_team', phKey: 'ra.placeholder_rival', emptyKey: 'ra.empty_rival', emptySubKey: 'ra.empty_rival_sub', isRival: true },
+        ].map(({ team, addFn, removeFn, clearFn, labelKey, phKey, emptyKey, emptySubKey, isRival }) => (
+          <div key={labelKey} className={`bg-[#0c1015] rounded-xl overflow-visible border ${isRival ? 'border-red-400/20' : 'border-[#1c2830]'}`}>
+            <div className={`bg-[#111820] px-5 py-3.5 rounded-t-xl flex items-center justify-between border-b ${isRival ? 'border-red-400/20' : 'border-[#1c2830]'}`}>
+              <h2 className={`font-orbitron text-sm font-bold tracking-widest uppercase ${isRival ? 'text-red-400' : 'text-white'}`}>{t(labelKey)}</h2>
+              <div className="flex items-center gap-2">
+                {team.length > 0 && <button onClick={clearFn} className="font-mono-tech text-xs text-[#4a6070] hover:text-red-400 transition-colors">{t('global.clear')}</button>}
+                <span className={`font-mono-tech text-xs px-2.5 py-1 rounded border ${isRival ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-[#4a6070] bg-[#0c1015] border-[#1c2830]'}`}>{team.length} / 6</span>
+              </div>
+            </div>
+            <div className="p-4 overflow-visible">
+              <PokemonSearch onAdd={addFn} maxReached={team.length >= 6} placeholder={t(phKey)} />
+              <div className="mt-3 flex flex-col gap-2">
+                {team.map((p, i) => (
+                  <div key={p.name} className="flex items-center justify-between bg-[#111820] border border-[#1c2830] rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono-tech text-xs text-[#4a6070] w-4">{i + 1}</span>
+                      <PokemonSprite pokemon={p} size={40} />
+                      <span className="font-bold text-white">{p.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">{p.types.map(type => <TypeBadge key={type} type={type} />)}</div>
+                      <button onClick={() => removeFn(p.name)} className="text-[#4a6070] hover:text-red-400 transition-colors ml-1 text-xl leading-none">×</button>
+                    </div>
+                  </div>
+                ))}
+                {team.length === 0 && (
+                  <div className="text-center py-6">
+                    <p className="text-[#4a6070] text-sm italic mb-1">{t(emptyKey)}</p>
+                    <p className="text-[#2a3840] text-xs font-mono-tech">{t(emptySubKey)}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+>>>>>>> a2ff58b2a17a9f1436d8768ab333a5c84cd39ef2
       </div>
 
       {/* Coverage */}
@@ -296,7 +356,11 @@ export default function RivalAnalysis() {
                 const accentColor = format === 'doubles' ? '#f0c040' : '#60a5fa'
                 const isLead = bestLead && (s.pokemon.name === bestLead.p1.name || s.pokemon.name === bestLead.p2.name)
                 return (
+<<<<<<< HEAD
                   <div key={s.pokemon.name} className={`rounded-xl border p-4 ${isTop ? (format === 'doubles' ? 'border-yellow-400/30 bg-yellow-400/5' : 'border-blue-400/30 bg-blue-400/5') : 'border-[#1c2830] bg-[#111820] opacity-40'}`}>
+=======
+                  <div key={s.pokemon.name} className={`rounded-xl border p-4 transition-all ${isTop ? (format === 'doubles' ? 'border-yellow-400/30 bg-yellow-400/5' : 'border-blue-400/30 bg-blue-400/5') : 'border-[#1c2830] bg-[#111820] opacity-40'}`}>
+>>>>>>> a2ff58b2a17a9f1436d8768ab333a5c84cd39ef2
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-lg">{rankEmoji}</span>
