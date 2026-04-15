@@ -1,8 +1,18 @@
 import { useState } from 'react'
 import PokemonSearch from './PokemonSearch'
 import TypeBadge from './TypeBadge'
-import { getEff } from './data'
+import { getEff, getSpriteUrl } from './data'
 import { useLang } from './lang'
+
+function PokemonSprite({ pokemon, size = 48 }) {
+  const url = getSpriteUrl(pokemon.spriteId)
+  if (!url) return null
+  return (
+    <img src={url} alt={pokemon.name} width={size} height={size}
+      style={{ imageRendering: 'pixelated', flexShrink: 0 }}
+      onError={e => { e.target.style.display = 'none' }} />
+  )
+}
 
 export default function LeadOptimizer() {
   const { t } = useLang()
@@ -45,12 +55,12 @@ export default function LeadOptimizer() {
         const coverage = rival.map(rp => {
           const best1 = Math.max(...p1.types.map(t => getEff(t, rp.types)))
           const best2 = Math.max(...p2.types.map(t => getEff(t, rp.types)))
-          return { name: rp.name, types: rp.types, mult: Math.max(best1, best2) }
+          return { name: rp.name, mult: Math.max(best1, best2) }
         })
         const threats = rival.map(rp => {
           const def1 = Math.max(...rp.types.map(t => getEff(t, p1.types)))
           const def2 = Math.max(...rp.types.map(t => getEff(t, p2.types)))
-          return { name: rp.name, types: rp.types, threatTo1: def1 >= 2, threatTo2: def2 >= 2 }
+          return { name: rp.name, threatTo1: def1 >= 2, threatTo2: def2 >= 2 }
         }).filter(t => t.threatTo1 || t.threatTo2)
         pairs.push({ p1, p2, score: Math.max(0, score), coverage, threats })
       }
@@ -62,96 +72,60 @@ export default function LeadOptimizer() {
   function copyResult() {
     if (!result?.[0]) return
     const best = result[0]
-    const text = `RivalEdge — Lead Optimizer\n${best.p1.name} + ${best.p2.name}\n\nrivaledge.net`
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    navigator.clipboard.writeText(`RivalEdge — Lead Optimizer\n${best.p1.name} + ${best.p2.name}\n\nrivaledge.net`)
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
   const maxScore = result?.[0]?.score || 1
 
   return (
     <div>
-
-      {/* Header */}
       <div className="mb-6 bg-[#0c1015] border border-[#1c2830] rounded-xl p-5">
         <p className="font-orbitron text-yellow-400 text-sm font-bold tracking-widest mb-1">{t('lo.title')}</p>
         <p className="text-sm text-[#8899aa]">{t('lo.desc')}</p>
       </div>
 
-      {/* Teams */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
-        {/* My Team */}
-        <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-visible">
-          <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830] rounded-t-xl flex items-center justify-between">
-            <h2 className="font-orbitron text-sm font-bold tracking-widest uppercase text-white">{t('lo.my_team')}</h2>
-            <div className="flex items-center gap-2">
-              {myTeam.length > 0 && <button onClick={clearMyTeam} className="font-mono-tech text-xs text-[#4a6070] hover:text-red-400 transition-colors">{t('global.clear')}</button>}
-              <span className="font-mono-tech text-xs text-[#4a6070] bg-[#0c1015] border border-[#1c2830] px-2.5 py-1 rounded">{myTeam.length} / 6</span>
+        {[
+          { team: myTeam, addFn: addToMyTeam, removeFn: removeMyTeam, clearFn: clearMyTeam, labelKey: 'lo.my_team', phKey: 'lo.placeholder_my', emptyKey: 'lo.empty_my', emptySubKey: 'lo.empty_my_sub', isRival: false },
+          { team: rival,  addFn: addToRival,  removeFn: removeRival,  clearFn: clearRival,  labelKey: 'lo.rival',   phKey: 'lo.placeholder_rival', emptyKey: 'lo.empty_rival', emptySubKey: 'lo.empty_rival_sub', isRival: true },
+        ].map(({ team, addFn, removeFn, clearFn, labelKey, phKey, emptyKey, emptySubKey, isRival }) => (
+          <div key={labelKey} className={`bg-[#0c1015] rounded-xl overflow-visible border ${isRival ? 'border-red-400/20' : 'border-[#1c2830]'}`}>
+            <div className={`bg-[#111820] px-5 py-3.5 rounded-t-xl flex items-center justify-between border-b ${isRival ? 'border-red-400/20' : 'border-[#1c2830]'}`}>
+              <h2 className={`font-orbitron text-sm font-bold tracking-widest uppercase ${isRival ? 'text-red-400' : 'text-white'}`}>{t(labelKey)}</h2>
+              <div className="flex items-center gap-2">
+                {team.length > 0 && <button onClick={clearFn} className="font-mono-tech text-xs text-[#4a6070] hover:text-red-400 transition-colors">{t('global.clear')}</button>}
+                <span className={`font-mono-tech text-xs px-2.5 py-1 rounded border ${isRival ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-[#4a6070] bg-[#0c1015] border-[#1c2830]'}`}>{team.length} / 6</span>
+              </div>
+            </div>
+            <div className="p-4 overflow-visible">
+              <PokemonSearch onAdd={addFn} maxReached={team.length >= 6} placeholder={t(phKey)} />
+              <div className="mt-3 flex flex-col gap-2">
+                {team.map((p, i) => (
+                  <div key={p.name} className="flex items-center justify-between bg-[#111820] border border-[#1c2830] rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono-tech text-xs text-[#4a6070] w-4">{i + 1}</span>
+                      <PokemonSprite pokemon={p} size={40} />
+                      <span className="font-bold text-white">{p.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">{p.types.map(type => <TypeBadge key={type} type={type} />)}</div>
+                      <button onClick={() => removeFn(p.name)} className="text-[#4a6070] hover:text-red-400 transition-colors ml-1 text-xl leading-none">×</button>
+                    </div>
+                  </div>
+                ))}
+                {team.length === 0 && (
+                  <div className="text-center py-6">
+                    <p className="text-[#4a6070] text-sm italic mb-1">{t(emptyKey)}</p>
+                    <p className="text-[#2a3840] text-xs font-mono-tech">{t(emptySubKey)}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          <div className="p-4 overflow-visible">
-            <PokemonSearch onAdd={addToMyTeam} maxReached={myTeam.length >= 6} placeholder={t('lo.placeholder_my')} />
-            <div className="mt-3 flex flex-col gap-2">
-              {myTeam.map((p, i) => (
-                <div key={p.name} className="flex items-center justify-between bg-[#111820] border border-[#1c2830] rounded-lg px-4 py-2.5">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono-tech text-xs text-[#4a6070]">{i + 1}</span>
-                    <span className="font-bold text-white">{p.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">{p.types.map(type => <TypeBadge key={type} type={type} />)}</div>
-                    <button onClick={() => removeMyTeam(p.name)} className="text-[#4a6070] hover:text-red-400 transition-colors ml-1 text-xl leading-none">×</button>
-                  </div>
-                </div>
-              ))}
-              {myTeam.length === 0 && (
-                <div className="text-center py-6">
-                  <p className="text-[#4a6070] text-sm italic mb-1">{t('lo.empty_my')}</p>
-                  <p className="text-[#2a3840] text-xs font-mono-tech">{t('lo.empty_my_sub')}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Rival */}
-        <div className="bg-[#0c1015] border border-red-400/20 rounded-xl overflow-visible">
-          <div className="bg-[#111820] px-5 py-3.5 border-b border-red-400/20 rounded-t-xl flex items-center justify-between">
-            <h2 className="font-orbitron text-sm font-bold tracking-widest uppercase text-red-400">{t('lo.rival')}</h2>
-            <div className="flex items-center gap-2">
-              {rival.length > 0 && <button onClick={clearRival} className="font-mono-tech text-xs text-[#4a6070] hover:text-red-400 transition-colors">{t('global.clear')}</button>}
-              <span className="font-mono-tech text-xs text-red-400 bg-red-400/10 border border-red-400/20 px-2.5 py-1 rounded">{rival.length} / 6</span>
-            </div>
-          </div>
-          <div className="p-4 overflow-visible">
-            <PokemonSearch onAdd={addToRival} maxReached={rival.length >= 6} placeholder={t('lo.placeholder_rival')} />
-            <div className="mt-3 flex flex-col gap-2">
-              {rival.map((p, i) => (
-                <div key={p.name} className="flex items-center justify-between bg-[#111820] border border-[#1c2830] rounded-lg px-4 py-2.5">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono-tech text-xs text-[#4a6070]">{i + 1}</span>
-                    <span className="font-bold text-white">{p.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">{p.types.map(type => <TypeBadge key={type} type={type} />)}</div>
-                    <button onClick={() => removeRival(p.name)} className="text-[#4a6070] hover:text-red-400 transition-colors ml-1 text-xl leading-none">×</button>
-                  </div>
-                </div>
-              ))}
-              {rival.length === 0 && (
-                <div className="text-center py-6">
-                  <p className="text-[#4a6070] text-sm italic mb-1">{t('lo.empty_rival')}</p>
-                  <p className="text-[#2a3840] text-xs font-mono-tech">{t('lo.empty_rival_sub')}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Analyze */}
       {myTeam.length >= 2 && rival.length > 0 && (
         <button onClick={analyze}
           className="w-full py-4 bg-yellow-400/10 border border-yellow-400/30 rounded-xl font-orbitron text-yellow-400 font-bold tracking-widest uppercase hover:bg-yellow-400/20 hover:border-yellow-400/50 transition-all mb-6"
@@ -160,7 +134,6 @@ export default function LeadOptimizer() {
         </button>
       )}
 
-      {/* Results */}
       {analyzed && result && (
         <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-hidden">
           <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830] flex items-center justify-between">
@@ -180,17 +153,17 @@ export default function LeadOptimizer() {
                   <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{rankEmoji}</span>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-white text-lg">{pair.p1.name}</span>
-                        <span className="text-yellow-400 font-orbitron">+</span>
-                        <span className="font-bold text-white text-lg">{pair.p2.name}</span>
-                      </div>
+                      <PokemonSprite pokemon={pair.p1} size={44} />
+                      <span className="font-bold text-white text-lg">{pair.p1.name}</span>
+                      <span className="text-yellow-400 font-orbitron">+</span>
+                      <PokemonSprite pokemon={pair.p2} size={44} />
+                      <span className="font-bold text-white text-lg">{pair.p2.name}</span>
                     </div>
-                    <div className="flex gap-1 flex-wrap justify-end">
-                      {pair.p1.types.map(type => <TypeBadge key={type} type={type} />)}
-                      <span className="text-[#4a6070] px-1">|</span>
-                      {pair.p2.types.map(type => <TypeBadge key={`2-${type}`} type={type} />)}
-                    </div>
+                  </div>
+                  <div className="flex gap-1 flex-wrap mb-3">
+                    {pair.p1.types.map(type => <TypeBadge key={type} type={type} />)}
+                    <span className="text-[#4a6070] px-1">|</span>
+                    {pair.p2.types.map(type => <TypeBadge key={`2-${type}`} type={type} />)}
                   </div>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="flex-1 h-1.5 bg-[#1c2830] rounded-full overflow-hidden">
@@ -203,11 +176,9 @@ export default function LeadOptimizer() {
                       <p className="font-mono-tech text-xs text-green-400 mb-1">{t('lo.coverage')}</p>
                       <div className="flex flex-wrap gap-1">
                         {pair.coverage.map(c => (
-                          <span key={c.name} className={`text-xs px-2 py-0.5 rounded border ${
-                            c.mult >= 4 ? 'bg-red-900/20 text-red-300 border-red-900/30' :
-                            c.mult >= 2 ? 'bg-green-900/20 text-green-300 border-green-900/30' :
-                            'bg-[#1c2830] text-[#4a6070] border-[#243040]'
-                          }`}>{c.name} {c.mult >= 2 ? `×${c.mult}` : '·'}</span>
+                          <span key={c.name} className={`text-xs px-2 py-0.5 rounded border ${c.mult >= 4 ? 'bg-red-900/20 text-red-300 border-red-900/30' : c.mult >= 2 ? 'bg-green-900/20 text-green-300 border-green-900/30' : 'bg-[#1c2830] text-[#4a6070] border-[#243040]'}`}>
+                            {c.name} {c.mult >= 2 ? `×${c.mult}` : '·'}
+                          </span>
                         ))}
                       </div>
                     </div>
