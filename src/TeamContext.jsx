@@ -1,10 +1,32 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 
 const TeamContext = createContext(null)
 
+const STORAGE_KEY = 'rivaledge_my_team'
+
+function loadTeam() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : []
+  } catch {
+    return []
+  }
+}
+
+function saveTeam(team) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(team))
+  } catch {}
+}
+
 export function TeamProvider({ children }) {
-  const [myTeam, setMyTeam] = useState([])
+  const [myTeam, setMyTeam] = useState(() => loadTeam())
   const [rivalTeam, setRivalTeam] = useState([])
+
+  // Guardar myTeam en localStorage cada vez que cambie
+  useEffect(() => {
+    saveTeam(myTeam)
+  }, [myTeam])
 
   function addPokemon(p) {
     if (myTeam.length >= 6 || myTeam.find(x => x.name === p.name)) return
