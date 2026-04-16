@@ -50,6 +50,151 @@ function LangToggle({ lang }) {
   )
 }
 
+function ContactForm({ lang, onClose }) {
+  const [status, setStatus] = useState('idle')
+  const [form, setForm] = useState({ type: 'feedback', message: '', email: '' })
+
+  const TYPES = [
+    { id: 'feedback', labelES: '💬 Opinión', labelEN: '💬 Feedback' },
+    { id: 'bug',      labelES: '🐛 Bug',     labelEN: '🐛 Bug' },
+    { id: 'idea',     labelES: '💡 Idea',    labelEN: '💡 Idea' },
+    { id: 'other',    labelES: '📩 Otro',    labelEN: '📩 Other' },
+  ]
+
+  async function handleSubmit() {
+    if (!form.message.trim()) return
+    setStatus('sending')
+    try {
+      const res = await fetch('https://formspree.io/f/xyklebwq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          type: form.type,
+          message: form.message,
+          email: form.email || 'No email provided',
+          _subject: `RivalEdge — ${form.type.toUpperCase()}`,
+        }),
+      })
+      if (res.ok) { setStatus('success'); setForm({ type: 'feedback', message: '', email: '' }) }
+      else setStatus('error')
+    } catch { setStatus('error') }
+  }
+
+  if (status === 'success') {
+    return (
+      <div className="text-center py-6">
+        <div className="text-4xl mb-3">✅</div>
+        <p className="font-orbitron text-yellow-400 font-bold tracking-widest text-sm mb-1">
+          {lang === 'es' ? '¡Mensaje enviado!' : 'Message sent!'}
+        </p>
+        <p className="text-xs text-[#8899aa] mb-4">
+          {lang === 'es' ? 'Gracias, lo leo todo.' : 'Thanks, I read everything.'}
+        </p>
+        <button onClick={onClose} className="font-mono-tech text-xs text-[#4a6070] hover:text-yellow-400 transition-colors">
+          {lang === 'es' ? 'Cerrar' : 'Close'}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex gap-2 flex-wrap">
+        {TYPES.map(type => (
+          <button key={type.id} onClick={() => setForm(f => ({ ...f, type: type.id }))}
+            className="px-2.5 py-1.5 rounded-lg font-mono-tech text-xs border transition-all"
+            style={form.type === type.id
+              ? { borderColor: 'rgba(240,192,64,0.4)', color: '#f0c040', background: 'rgba(240,192,64,0.1)' }
+              : { borderColor: '#1c2830', color: '#4a6070', background: '#0c1015' }}>
+            {lang === 'es' ? type.labelES : type.labelEN}
+          </button>
+        ))}
+      </div>
+
+      <textarea
+        value={form.message}
+        onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+        placeholder={lang === 'es' ? 'Bug, idea, opinión...' : 'Bug, idea, feedback...'}
+        rows={3}
+        className="w-full bg-[#0c1015] border border-[#1c2830] rounded-xl px-4 py-3 text-white placeholder-[#4a6070] outline-none focus:border-yellow-400/50 transition-colors font-mono-tech text-sm resize-none"
+      />
+
+      <input
+        value={form.email}
+        onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+        placeholder={lang === 'es' ? 'Email (opcional)' : 'Email (optional)'}
+        type="email"
+        className="w-full bg-[#0c1015] border border-[#1c2830] rounded-xl px-4 py-2.5 text-white placeholder-[#4a6070] outline-none focus:border-yellow-400/50 transition-colors font-mono-tech text-sm"
+      />
+
+      <button
+        onClick={handleSubmit}
+        disabled={!form.message.trim() || status === 'sending'}
+        className="w-full py-3 bg-yellow-400/10 border border-yellow-400/30 rounded-xl font-orbitron text-yellow-400 font-bold tracking-widest uppercase text-xs hover:bg-yellow-400/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+        {status === 'sending'
+          ? (lang === 'es' ? 'Enviando...' : 'Sending...')
+          : (lang === 'es' ? '📨 Enviar' : '📨 Send')}
+      </button>
+
+      {status === 'error' && (
+        <p className="text-center font-mono-tech text-xs text-red-400">
+          {lang === 'es' ? 'Error al enviar. Inténtalo de nuevo.' : 'Error sending. Please try again.'}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// Botón flotante de feedback — visible siempre en esquina inferior derecha
+function FloatingFeedback({ lang }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      {/* Overlay */}
+      {open && (
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
+      )}
+
+      {/* Panel */}
+      {open && (
+        <div className="fixed bottom-20 right-4 z-50 w-80 bg-[#111820] border border-[#1c2830] rounded-2xl shadow-2xl overflow-hidden"
+          style={{ boxShadow: '0 0 40px rgba(0,0,0,0.5), 0 0 20px rgba(240,192,64,0.05)' }}>
+          <div className="bg-[#0c1015] px-5 py-3.5 border-b border-[#1c2830] flex items-center justify-between">
+            <div>
+              <p className="font-orbitron text-sm font-bold text-white tracking-widest">
+                {lang === 'es' ? '📬 Contacto' : '📬 Contact'}
+              </p>
+              <p className="font-mono-tech text-xs text-[#4a6070] mt-0.5">
+                {lang === 'es' ? 'Lo leo todo y respondo.' : 'I read and respond to everything.'}
+              </p>
+            </div>
+            <button onClick={() => setOpen(false)}
+              className="text-[#4a6070] hover:text-white transition-colors text-xl leading-none ml-3">×</button>
+          </div>
+          <div className="p-4">
+            <ContactForm lang={lang} onClose={() => setOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Botón flotante */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="fixed bottom-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl font-orbitron text-xs font-bold tracking-widest uppercase transition-all duration-300 hover:scale-105"
+        style={{
+          background: open ? '#111820' : '#0c1015',
+          border: '1px solid rgba(240,192,64,0.3)',
+          color: '#f0c040',
+          boxShadow: '0 0 20px rgba(240,192,64,0.15)',
+        }}>
+        <span>{open ? '✕' : '📬'}</span>
+        <span className="hidden sm:inline">{lang === 'es' ? 'Feedback' : 'Feedback'}</span>
+      </button>
+    </>
+  )
+}
+
 export default function Landing({ onEnter }) {
   const { t, lang } = useLang()
   const [visible, setVisible] = useState(false)
@@ -165,9 +310,12 @@ export default function Landing({ onEnter }) {
       </div>
 
       {/* Footer */}
-      <div className={`relative z-10 text-center pb-12 transition-all duration-1000 delay-500 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`relative z-10 text-center pb-20 transition-all duration-1000 delay-500 ${visible ? 'opacity-100' : 'opacity-0'}`}>
         <p className="font-mono-tech text-xs text-[#2a3840]">{t('global.footer')}</p>
       </div>
+
+      {/* Floating feedback button — siempre visible */}
+      <FloatingFeedback lang={lang} />
 
     </div>
   )
