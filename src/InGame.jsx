@@ -23,7 +23,6 @@ function getMatchupScore(myP, rivalLeads) {
     else if (bestOff >= 2) offScore += 20
     else if (bestOff === 1) offScore += 5
     else offScore -= 5
-
     const worstDef = Math.max(...rp.types.map(t => getEff(t, myP.types)))
     if (worstDef >= 4) defScore -= 35
     else if (worstDef >= 2) defScore -= 15
@@ -34,23 +33,21 @@ function getMatchupScore(myP, rivalLeads) {
 }
 
 function getVerdict(total) {
-  if (total >= 60)  return { label: '✅ Ventaja clara',     labelEN: '✅ Clear advantage',    color: 'text-green-400',  bg: 'bg-green-900/20',  border: 'border-green-500/30' }
-  if (total >= 20)  return { label: '🟡 Ligera ventaja',   labelEN: '🟡 Slight advantage',   color: 'text-yellow-400', bg: 'bg-yellow-900/20', border: 'border-yellow-500/30' }
-  if (total >= -20) return { label: '⚖️ Matchup neutro',   labelEN: '⚖️ Neutral matchup',    color: 'text-[#8899aa]',  bg: 'bg-[#111820]',     border: 'border-[#1c2830]' }
+  if (total >= 60)  return { label: '✅ Ventaja clara',      labelEN: '✅ Clear advantage',     color: 'text-green-400',  bg: 'bg-green-900/20',  border: 'border-green-500/30' }
+  if (total >= 20)  return { label: '🟡 Ligera ventaja',    labelEN: '🟡 Slight advantage',    color: 'text-yellow-400', bg: 'bg-yellow-900/20', border: 'border-yellow-500/30' }
+  if (total >= -20) return { label: '⚖️ Matchup neutro',    labelEN: '⚖️ Neutral matchup',     color: 'text-[#8899aa]',  bg: 'bg-[#111820]',     border: 'border-[#1c2830]' }
   if (total >= -50) return { label: '🟠 Ligera desventaja', labelEN: '🟠 Slight disadvantage', color: 'text-orange-400', bg: 'bg-orange-900/20', border: 'border-orange-500/30' }
-  return           { label: '❌ Desventaja clara',          labelEN: '❌ Clear disadvantage',  color: 'text-red-400',    bg: 'bg-red-900/20',    border: 'border-red-500/30' }
+  return             { label: '❌ Desventaja clara',         labelEN: '❌ Clear disadvantage',  color: 'text-red-400',    bg: 'bg-red-900/20',    border: 'border-red-500/30' }
 }
 
 export default function InGame() {
-  const { t, lang } = useLang()
-  const { myTeam } = useTeam()
+  const { lang } = useLang()
+  const { myTeam, rivalTeam, addRivalPokemon, removeRivalPokemon, clearRivalTeam } = useTeam()
 
-  const [myLead, setMyLead] = useState([])       // los 2 que yo saqué
-  const [rivalLead, setRivalLead] = useState([]) // los 2 del rival
-  const [analyzed, setAnalyzed] = useState(false)
+  const [myLead, setMyLead] = useState([])
+  const [rivalLead, setRivalLead] = useState([])
 
   function toggleMyLead(p) {
-    setAnalyzed(false)
     if (myLead.find(x => x.name === p.name)) {
       setMyLead(myLead.filter(x => x.name !== p.name))
     } else {
@@ -59,24 +56,30 @@ export default function InGame() {
     }
   }
 
-  function addRival(p) {
-    if (rivalLead.length >= 2 || rivalLead.find(x => x.name === p.name)) return
-    setRivalLead([...rivalLead, p])
-    setAnalyzed(false)
+  // El lead rival se selecciona de rivalTeam (si hay) o se busca manualmente
+  function toggleRivalLead(p) {
+    if (rivalLead.find(x => x.name === p.name)) {
+      setRivalLead(rivalLead.filter(x => x.name !== p.name))
+    } else {
+      if (rivalLead.length >= 2) return
+      setRivalLead([...rivalLead, p])
+    }
   }
 
-  function removeRival(name) { setRivalLead(rivalLead.filter(p => p.name !== name)); setAnalyzed(false) }
-  function reset() { setMyLead([]); setRivalLead([]); setAnalyzed(false) }
+  function addManualRival(p) {
+    addRivalPokemon(p)
+    if (rivalLead.length < 2) setRivalLead(prev => [...prev, p])
+  }
 
-  // Análisis completo
+  function reset() { setMyLead([]); setRivalLead([]) }
+
   const myLeadScores   = myLead.map(p => ({ pokemon: p, ...getMatchupScore(p, rivalLead) }))
   const benchScores    = myTeam.filter(p => !myLead.find(l => l.name === p.name)).map(p => ({ pokemon: p, ...getMatchupScore(p, rivalLead) })).sort((a, b) => b.total - a.total)
   const totalLeadScore = myLeadScores.reduce((sum, s) => sum + s.total, 0)
   const verdict        = rivalLead.length > 0 && myLead.length > 0 ? getVerdict(totalLeadScore) : null
   const bestSwitch     = benchScores[0]
   const shouldSwitch   = verdict && totalLeadScore < -20 && bestSwitch && bestSwitch.total > totalLeadScore
-
-  const canAnalyze = myLead.length === 2 && rivalLead.length === 2
+  const canAnalyze     = myLead.length === 2 && rivalLead.length === 2
 
   return (
     <div>
@@ -96,7 +99,7 @@ export default function InGame() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-        {/* MI LEAD — selecciona de tu equipo */}
+        {/* MI LEAD */}
         <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-hidden">
           <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830] flex items-center justify-between">
             <div>
@@ -127,18 +130,12 @@ export default function InGame() {
                   const isSelected = !!myLead.find(x => x.name === p.name)
                   const isDisabled = !isSelected && myLead.length >= 2
                   return (
-                    <button
-                      key={p.name}
-                      onClick={() => toggleMyLead(p)}
-                      disabled={isDisabled}
+                    <button key={p.name} onClick={() => toggleMyLead(p)} disabled={isDisabled}
                       className={`rounded-xl border p-3 text-center transition-all duration-200 ${
-                        isSelected
-                          ? 'border-yellow-400/50 bg-yellow-400/10 scale-[1.03]'
-                          : isDisabled
-                            ? 'border-[#1c2830] bg-[#0c1015] opacity-30 cursor-not-allowed'
-                            : 'border-[#1c2830] bg-[#111820] hover:border-yellow-400/30 hover:bg-yellow-400/5'
-                      }`}
-                    >
+                        isSelected ? 'border-yellow-400/50 bg-yellow-400/10 scale-[1.03]'
+                        : isDisabled ? 'border-[#1c2830] bg-[#0c1015] opacity-30 cursor-not-allowed'
+                        : 'border-[#1c2830] bg-[#111820] hover:border-yellow-400/30 hover:bg-yellow-400/5'
+                      }`}>
                       <div className="flex justify-center mb-1">
                         <PokemonSprite pokemon={p} size={44} />
                       </div>
@@ -146,9 +143,7 @@ export default function InGame() {
                       <div className="flex justify-center gap-1 mt-1 flex-wrap">
                         {p.types.map(type => <TypeBadge key={type} type={type} size="sm" />)}
                       </div>
-                      {isSelected && (
-                        <p className="font-mono-tech text-xs text-yellow-400 mt-1">✓ LEAD</p>
-                      )}
+                      {isSelected && <p className="font-mono-tech text-xs text-yellow-400 mt-1">✓ LEAD</p>}
                     </button>
                   )
                 })}
@@ -165,54 +160,83 @@ export default function InGame() {
                 {lang === 'es' ? 'Lead del Rival' : 'Rival\'s Lead'}
               </h2>
               <p className="font-mono-tech text-xs text-[#4a6070] mt-0.5">
-                {lang === 'es' ? 'Los 2 que sacó el rival' : 'The 2 the rival sent out'}
+                {lang === 'es' ? 'Selecciona o añade los 2 del rival' : 'Select or add the rival\'s 2'}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              {rivalLead.length > 0 && (
-                <button onClick={() => { setRivalLead([]); setAnalyzed(false) }}
-                  className="font-mono-tech text-xs text-[#4a6070] hover:text-red-400 transition-colors">
-                  {t('global.clear')}
-                </button>
-              )}
-              <span className={`font-mono-tech text-xs px-2.5 py-1 rounded border ${rivalLead.length === 2 ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-[#4a6070] bg-[#0c1015] border-[#1c2830]'}`}>
-                {rivalLead.length} / 2
-              </span>
-            </div>
+            <span className={`font-mono-tech text-xs px-2.5 py-1 rounded border ${rivalLead.length === 2 ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-[#4a6070] bg-[#0c1015] border-[#1c2830]'}`}>
+              {rivalLead.length} / 2
+            </span>
           </div>
           <div className="p-4 overflow-visible">
-            <PokemonSearch onAdd={addRival} maxReached={rivalLead.length >= 2}
-              placeholder={lang === 'es' ? 'Pokémon del rival...' : 'Rival Pokémon...'} />
-            <div className="mt-3 flex flex-col gap-2">
-              {rivalLead.map(p => (
-                <div key={p.name} className="flex items-center justify-between bg-[#111820] border border-[#1c2830] rounded-lg px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <PokemonSprite pokemon={p} size={40} />
-                    <span className="font-bold text-white">{p.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">{p.types.map(type => <TypeBadge key={type} type={type} />)}</div>
-                    <button onClick={() => removeRival(p.name)} className="text-[#4a6070] hover:text-red-400 transition-colors ml-1 text-xl leading-none">×</button>
-                  </div>
+
+            {/* Si hay equipo rival guardado, muéstralo para seleccionar */}
+            {rivalTeam.length > 0 ? (
+              <>
+                <p className="font-mono-tech text-xs text-red-400/60 mb-3">
+                  {lang === 'es' ? 'Equipo del rival (del Rival Analysis):' : 'Rival team (from Rival Analysis):'}
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+                  {rivalTeam.map(p => {
+                    const isSelected = !!rivalLead.find(x => x.name === p.name)
+                    const isDisabled = !isSelected && rivalLead.length >= 2
+                    return (
+                      <button key={p.name} onClick={() => toggleRivalLead(p)} disabled={isDisabled}
+                        className={`rounded-xl border p-3 text-center transition-all duration-200 ${
+                          isSelected ? 'border-red-400/50 bg-red-400/10 scale-[1.03]'
+                          : isDisabled ? 'border-[#1c2830] bg-[#0c1015] opacity-30 cursor-not-allowed'
+                          : 'border-[#1c2830] bg-[#111820] hover:border-red-400/30 hover:bg-red-400/5'
+                        }`}>
+                        <div className="flex justify-center mb-1">
+                          <PokemonSprite pokemon={p} size={44} />
+                        </div>
+                        <p className="font-bold text-white text-xs truncate">{p.name}</p>
+                        <div className="flex justify-center gap-1 mt-1 flex-wrap">
+                          {p.types.map(type => <TypeBadge key={type} type={type} size="sm" />)}
+                        </div>
+                        {isSelected && <p className="font-mono-tech text-xs text-red-400 mt-1">✓ LEAD</p>}
+                      </button>
+                    )
+                  })}
                 </div>
-              ))}
-              {rivalLead.length === 0 && (
-                <div className="text-center py-6">
-                  <p className="text-[#4a6070] text-sm italic">
-                    {lang === 'es' ? 'Añade los 2 Pokémon del rival' : 'Add the rival\'s 2 Pokémon'}
-                  </p>
+                <p className="font-mono-tech text-xs text-[#4a6070] mb-2">
+                  {lang === 'es' ? '¿Sacó otro? Añádelo:' : 'Did they send out another? Add it:'}
+                </p>
+                <PokemonSearch onAdd={addManualRival} maxReached={rivalTeam.length >= 6}
+                  placeholder={lang === 'es' ? 'Pokémon del rival...' : 'Rival Pokémon...'} />
+              </>
+            ) : (
+              <>
+                <p className="font-mono-tech text-xs text-[#4a6070] mb-3">
+                  {lang === 'es'
+                    ? 'Añade los Pokémon que sacó el rival (o ponlos en Rival Analysis para tenerlos guardados):'
+                    : 'Add the rival\'s Pokémon (or add them in Rival Analysis to save them):'}
+                </p>
+                <PokemonSearch onAdd={addManualRival} maxReached={rivalLead.length >= 2}
+                  placeholder={lang === 'es' ? 'Pokémon del rival...' : 'Rival Pokémon...'} />
+                <div className="mt-3 flex flex-col gap-2">
+                  {rivalLead.map(p => (
+                    <div key={p.name} className="flex items-center justify-between bg-[#111820] border border-[#1c2830] rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <PokemonSprite pokemon={p} size={40} />
+                        <span className="font-bold text-white">{p.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1">{p.types.map(type => <TypeBadge key={type} type={type} />)}</div>
+                        <button onClick={() => setRivalLead(rivalLead.filter(x => x.name !== p.name))}
+                          className="text-[#4a6070] hover:text-red-400 transition-colors ml-1 text-xl leading-none">×</button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* RESULTADO EN TIEMPO REAL */}
+      {/* RESULTADO */}
       {canAnalyze && verdict && (
         <div className="flex flex-col gap-4">
-
-          {/* Veredicto principal */}
           <div className={`rounded-xl border p-5 ${verdict.border} ${verdict.bg}`}>
             <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
               <div>
@@ -231,7 +255,6 @@ export default function InGame() {
               </button>
             </div>
 
-            {/* Detalle de cada lead mío */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               {myLeadScores.map(s => {
                 const v = getVerdict(s.total)
@@ -254,7 +277,6 @@ export default function InGame() {
               })}
             </div>
 
-            {/* Sugerencia de cambio */}
             {shouldSwitch && bestSwitch && (
               <div className="bg-orange-900/20 border border-orange-500/30 rounded-xl p-4">
                 <p className="font-mono-tech text-xs text-orange-400 tracking-widest mb-3">
@@ -273,7 +295,6 @@ export default function InGame() {
               </div>
             )}
 
-            {/* Si el matchup es bueno, confirmar */}
             {!shouldSwitch && totalLeadScore >= 0 && (
               <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-4">
                 <p className="font-mono-tech text-xs text-green-400">
@@ -285,7 +306,6 @@ export default function InGame() {
             )}
           </div>
 
-          {/* Resto del banco ordenado */}
           {myTeam.length > 2 && (
             <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-hidden">
               <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830]">

@@ -17,19 +17,14 @@ function PokemonSprite({ pokemon, size = 48 }) {
 
 export default function RivalAnalysis() {
   const { t } = useLang()
-  const { myTeam, addPokemon, removePokemon, clearTeam } = useTeam()
+  const { myTeam, addPokemon, removePokemon, clearTeam, rivalTeam, addRivalPokemon, removeRivalPokemon, clearRivalTeam } = useTeam()
   const [format, setFormat] = useState('doubles')
-  const [rival, setRival] = useState([])
   const [analyzed, setAnalyzed] = useState(false)
   const [scores, setScores] = useState([])
   const [bestLead, setBestLead] = useState(null)
   const [copied, setCopied] = useState(false)
 
   const bringCount = format === 'doubles' ? 4 : 3
-
-  function addToRival(p)  { if (rival.length >= 6 || rival.find(x => x.name === p.name)) return; setRival([...rival, p]); setAnalyzed(false) }
-  function removeRival(name) { setRival(rival.filter(p => p.name !== name)); setAnalyzed(false) }
-  function clearRival()      { setRival([]); setAnalyzed(false) }
 
   function getTeamWeaknesses() {
     const counts = {}
@@ -56,9 +51,9 @@ export default function RivalAnalysis() {
     return counts
   }
 
-  function scorePair(p1, p2, rivalTeam) {
+  function scorePair(p1, p2, rivalArr) {
     let score = 0
-    rivalTeam.forEach(rp => {
+    rivalArr.forEach(rp => {
       const best1 = Math.max(...p1.types.map(t => getEff(t, rp.types)))
       const best2 = Math.max(...p2.types.map(t => getEff(t, rp.types)))
       score += Math.max(best1, best2) >= 4 ? 40 : Math.max(best1, best2) >= 2 ? 20 : 5
@@ -73,11 +68,11 @@ export default function RivalAnalysis() {
   }
 
   function analyze() {
-    if (myTeam.length === 0 || rival.length === 0) return
+    if (myTeam.length === 0 || rivalTeam.length === 0) return
     const scored = myTeam.map(mp => {
       let score = 0
       const offensiveWins = [], dangers = []
-      rival.forEach(rp => {
+      rivalTeam.forEach(rp => {
         const bestOff = Math.max(...mp.types.map(mt => getEff(mt, rp.types)))
         if (bestOff >= 4) { score += 40; offensiveWins.push({ name: rp.name, mult: 4 }) }
         else if (bestOff >= 2) { score += 20; offensiveWins.push({ name: rp.name, mult: 2 }) }
@@ -98,7 +93,7 @@ export default function RivalAnalysis() {
       let bestPair = null, bestPairScore = -1
       for (let i = 0; i < topN.length; i++) {
         for (let j = i + 1; j < topN.length; j++) {
-          const s = scorePair(topN[i].pokemon, topN[j].pokemon, rival)
+          const s = scorePair(topN[i].pokemon, topN[j].pokemon, rivalTeam)
           if (s > bestPairScore) { bestPairScore = s; bestPair = { p1: topN[i].pokemon, p2: topN[j].pokemon } }
         }
       }
@@ -137,7 +132,7 @@ export default function RivalAnalysis() {
       {/* Teams */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-        {/* My Team — usa contexto global */}
+        {/* My Team */}
         <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-visible">
           <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830] rounded-t-xl flex items-center justify-between">
             <div>
@@ -178,16 +173,19 @@ export default function RivalAnalysis() {
         {/* Rival Team */}
         <div className="bg-[#0c1015] border border-red-400/20 rounded-xl overflow-visible">
           <div className="bg-[#111820] px-5 py-3.5 border-b border-red-400/20 rounded-t-xl flex items-center justify-between">
-            <h2 className="font-orbitron text-sm font-bold tracking-widest uppercase text-red-400">{t('ra.rival_team')}</h2>
+            <div>
+              <h2 className="font-orbitron text-sm font-bold tracking-widest uppercase text-red-400">{t('ra.rival_team')}</h2>
+              <p className="font-mono-tech text-xs text-red-400/60 mt-0.5">Equipo compartido entre herramientas</p>
+            </div>
             <div className="flex items-center gap-2">
-              {rival.length > 0 && <button onClick={clearRival} className="font-mono-tech text-xs text-[#4a6070] hover:text-red-400 transition-colors">{t('global.clear')}</button>}
-              <span className="font-mono-tech text-xs text-red-400 bg-red-400/10 border border-red-400/20 px-2.5 py-1 rounded">{rival.length} / 6</span>
+              {rivalTeam.length > 0 && <button onClick={() => { clearRivalTeam(); setAnalyzed(false) }} className="font-mono-tech text-xs text-[#4a6070] hover:text-red-400 transition-colors">{t('global.clear')}</button>}
+              <span className="font-mono-tech text-xs text-red-400 bg-red-400/10 border border-red-400/20 px-2.5 py-1 rounded">{rivalTeam.length} / 6</span>
             </div>
           </div>
           <div className="p-4 overflow-visible">
-            <PokemonSearch onAdd={addToRival} maxReached={rival.length >= 6} placeholder={t('ra.placeholder_rival')} />
+            <PokemonSearch onAdd={p => { addRivalPokemon(p); setAnalyzed(false) }} maxReached={rivalTeam.length >= 6} placeholder={t('ra.placeholder_rival')} />
             <div className="mt-3 flex flex-col gap-2">
-              {rival.map((p, i) => (
+              {rivalTeam.map((p, i) => (
                 <div key={p.name} className="flex items-center justify-between bg-[#111820] border border-[#1c2830] rounded-lg px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span className="font-mono-tech text-xs text-[#4a6070] w-4">{i + 1}</span>
@@ -196,11 +194,11 @@ export default function RivalAnalysis() {
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">{p.types.map(type => <TypeBadge key={type} type={type} />)}</div>
-                    <button onClick={() => removeRival(p.name)} className="text-[#4a6070] hover:text-red-400 transition-colors ml-1 text-xl leading-none">×</button>
+                    <button onClick={() => { removeRivalPokemon(p.name); setAnalyzed(false) }} className="text-[#4a6070] hover:text-red-400 transition-colors ml-1 text-xl leading-none">×</button>
                   </div>
                 </div>
               ))}
-              {rival.length === 0 && (
+              {rivalTeam.length === 0 && (
                 <div className="text-center py-6">
                   <p className="text-[#4a6070] text-sm italic mb-1">{t('ra.empty_rival')}</p>
                   <p className="text-[#2a3840] text-xs font-mono-tech">{t('ra.empty_rival_sub')}</p>
@@ -242,7 +240,7 @@ export default function RivalAnalysis() {
       )}
 
       {/* Analyze button */}
-      {myTeam.length > 0 && rival.length > 0 && (
+      {myTeam.length > 0 && rivalTeam.length > 0 && (
         <button onClick={analyze}
           className={`w-full py-4 rounded-xl font-orbitron font-bold tracking-widest uppercase transition-all mb-6 border ${
             format === 'doubles' ? 'bg-yellow-400/10 border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20 hover:border-yellow-400/50' : 'bg-blue-400/10 border-blue-400/30 text-blue-400 hover:bg-blue-400/20 hover:border-blue-400/50'
