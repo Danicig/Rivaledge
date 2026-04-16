@@ -5,6 +5,7 @@ import TierList from './TierList'
 import DamageCalc from './DamageCalc'
 import TeamGenerator from './TeamGenerator'
 import InGame from './InGame'
+import SpeedTiers from './SpeedTiers'
 import { useLang, toggleLang } from './lang'
 
 const TABS = [
@@ -13,6 +14,7 @@ const TABS = [
   { id: 'ingame',    labelKey: 'tool.ingame.title',     shortLabel: 'In-Game',   icon: '⚡', color: '#ff4422' },
   { id: 'damage',    labelKey: 'tool.damage.title',     shortLabel: 'Damage',    icon: '💥', color: '#ff8844' },
   { id: 'tierlist',  labelKey: 'tool.tierlist.title',   shortLabel: 'Tiers',     icon: '📊', color: '#33aaff' },
+  { id: 'speedtiers',labelKey: 'tool.speedtiers.title', shortLabel: 'Speed',     icon: '🏃', color: '#33cc88' },
   { id: 'types',     labelKey: 'tool.types.title',      shortLabel: 'Types',     icon: '🔷', color: '#33aa33' },
 ]
 
@@ -42,7 +44,6 @@ export default function TeamBuilder({ startTab = 'analysis', onBack }) {
 
   return (
     <div className="min-h-screen bg-[#06080a] text-white">
-
       <header className="border-b border-[#1c2830] bg-[#0c1015] px-4 py-5 text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-yellow-400/5 to-transparent pointer-events-none" />
         <div className="absolute inset-0 pointer-events-none transition-all duration-500"
@@ -65,10 +66,7 @@ export default function TeamBuilder({ startTab = 'analysis', onBack }) {
       <nav className="border-b border-[#1c2830] bg-[#0c1015] px-2 flex overflow-x-auto">
         {TABS.map(tab => {
           const isActive = activeTab === tab.id
-          // InGame tab tiene tratamiento especial — siempre muestra el label corto con punto rojo
-          const label = tab.id === 'ingame'
-            ? (lang === 'es' ? 'In-Game' : 'In-Game')
-            : t(tab.labelKey)
+          const label = tab.id === 'ingame' ? 'In-Game' : t(tab.labelKey)
           return (
             <button key={tab.id} onClick={() => handleTabChange(tab.id)}
               className="flex-shrink-0 flex items-center gap-1.5 px-4 sm:px-5 py-3.5 font-orbitron text-xs font-bold tracking-widest uppercase border-b-2 transition-all duration-200 whitespace-nowrap"
@@ -89,12 +87,13 @@ export default function TeamBuilder({ startTab = 'analysis', onBack }) {
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 transition-opacity duration-150"
         style={{ opacity: contentVisible ? 1 : 0 }}>
-        {activeTab === 'generator' && <TeamGenerator />}
-        {activeTab === 'analysis'  && <RivalAnalysis />}
-        {activeTab === 'ingame'    && <InGame />}
-        {activeTab === 'damage'    && <DamageCalc />}
-        {activeTab === 'tierlist'  && <TierList />}
-        {activeTab === 'types'     && <TypeChart />}
+        {activeTab === 'generator'  && <TeamGenerator />}
+        {activeTab === 'analysis'   && <RivalAnalysis />}
+        {activeTab === 'ingame'     && <InGame />}
+        {activeTab === 'damage'     && <DamageCalc />}
+        {activeTab === 'tierlist'   && <TierList />}
+        {activeTab === 'speedtiers' && <SpeedTiers />}
+        {activeTab === 'types'      && <TypeChart />}
       </div>
     </div>
   )

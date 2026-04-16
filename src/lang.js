@@ -39,8 +39,10 @@ const TRANSLATIONS = {
     'tool.damage.desc':     'Movepools reales de PokéAPI. Calcula rangos de daño exactos contra cualquier defensor.',
     'tool.tierlist.title':  'Tier List',
     'tool.tierlist.desc':   'Rankings del meta actual para Regulación M-A. Datos reales de más de 24.000 batallas.',
-    'tool.types.title':     'Type Chart',
-    'tool.types.desc':      'Tabla interactiva 18×18 de efectividad de tipos. Encuentra debilidades en segundos.',
+    'tool.types.title':      'Type Chart',
+    'tool.types.desc':       'Tabla interactiva 18×18 de efectividad de tipos. Encuentra debilidades en segundos.',
+    'tool.speedtiers.title': 'Speed Tiers',
+    'tool.speedtiers.desc':  'Velocidades reales de todos los Pokémon del meta a nivel 50. Filtra por naturaleza y EVs. Se actualiza automáticamente.',
 
     'teambuilder.subtitle': 'Pokemon Champions 2026 · Análisis y construcción de equipos',
 
@@ -213,8 +215,10 @@ const TRANSLATIONS = {
     'tool.damage.desc':     'Real movepools from PokéAPI. Calculate exact damage ranges against any defender.',
     'tool.tierlist.title':  'Tier List',
     'tool.tierlist.desc':   'Current meta rankings for Regulation M-A. Real data from 24,000+ battles.',
-    'tool.types.title':     'Type Chart',
-    'tool.types.desc':      'Full 18×18 interactive type effectiveness table. Find weaknesses in seconds.',
+    'tool.types.title':      'Type Chart',
+    'tool.types.desc':       'Full 18×18 interactive type effectiveness table. Find weaknesses in seconds.',
+    'tool.speedtiers.title': 'Speed Tiers',
+    'tool.speedtiers.desc':  'Real speed values for all meta Pokémon at level 50. Filter by nature and EVs. Auto-updated.',
 
     'teambuilder.subtitle': 'Pokemon Champions 2026 · Competitive Team Builder & Analysis',
 

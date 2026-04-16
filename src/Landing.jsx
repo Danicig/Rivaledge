@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import { useLang, toggleLang } from './lang'
 
 const TOOLS = [
-  { id: 'generator', icon: '🧬', titleKey: 'tool.generator.title', descKey: 'tool.generator.desc', color: '#aa44ff', border: 'border-purple-400/30', bg: 'bg-purple-400/5', accentColor: 'rgba(170,68,255,0.5)' },
-  { id: 'analysis',  icon: '⚔️', titleKey: 'tool.analysis.title',  descKey: 'tool.analysis.desc',  color: '#f0c040', border: 'border-yellow-400/30', bg: 'bg-yellow-400/5', accentColor: 'rgba(240,192,64,0.5)' },
-  { id: 'ingame',    icon: '⚡', titleKey: 'tool.ingame.title',    descKey: 'tool.ingame.desc',    color: '#ff4422', border: 'border-red-400/30',    bg: 'bg-red-400/5',    accentColor: 'rgba(255,68,34,0.5)' },
-  { id: 'damage',    icon: '💥', titleKey: 'tool.damage.title',    descKey: 'tool.damage.desc',    color: '#ff8844', border: 'border-orange-400/30', bg: 'bg-orange-400/5', accentColor: 'rgba(255,136,68,0.5)' },
-  { id: 'tierlist',  icon: '📊', titleKey: 'tool.tierlist.title',  descKey: 'tool.tierlist.desc',  color: '#33aaff', border: 'border-blue-400/30',   bg: 'bg-blue-400/5',   accentColor: 'rgba(51,170,255,0.5)' },
-  { id: 'types',     icon: '🔷', titleKey: 'tool.types.title',     descKey: 'tool.types.desc',     color: '#33aa33', border: 'border-green-400/30',  bg: 'bg-green-400/5',  accentColor: 'rgba(51,170,51,0.5)' },
+  { id: 'generator',  icon: '🧬', titleKey: 'tool.generator.title',  descKey: 'tool.generator.desc',  color: '#aa44ff', border: 'border-purple-400/30', bg: 'bg-purple-400/5', accentColor: 'rgba(170,68,255,0.5)' },
+  { id: 'analysis',   icon: '⚔️', titleKey: 'tool.analysis.title',   descKey: 'tool.analysis.desc',   color: '#f0c040', border: 'border-yellow-400/30', bg: 'bg-yellow-400/5', accentColor: 'rgba(240,192,64,0.5)' },
+  { id: 'ingame',     icon: '⚡', titleKey: 'tool.ingame.title',     descKey: 'tool.ingame.desc',     color: '#ff4422', border: 'border-red-400/30',    bg: 'bg-red-400/5',    accentColor: 'rgba(255,68,34,0.5)' },
+  { id: 'damage',     icon: '💥', titleKey: 'tool.damage.title',     descKey: 'tool.damage.desc',     color: '#ff8844', border: 'border-orange-400/30', bg: 'bg-orange-400/5', accentColor: 'rgba(255,136,68,0.5)' },
+  { id: 'tierlist',   icon: '📊', titleKey: 'tool.tierlist.title',   descKey: 'tool.tierlist.desc',   color: '#33aaff', border: 'border-blue-400/30',   bg: 'bg-blue-400/5',   accentColor: 'rgba(51,170,255,0.5)' },
+  { id: 'speedtiers', icon: '🏃', titleKey: 'tool.speedtiers.title', descKey: 'tool.speedtiers.desc', color: '#33cc88', border: 'border-emerald-400/30',bg: 'bg-emerald-400/5', accentColor: 'rgba(51,204,136,0.5)' },
+  { id: 'types',      icon: '🔷', titleKey: 'tool.types.title',      descKey: 'tool.types.desc',      color: '#33aa33', border: 'border-green-400/30',  bg: 'bg-green-400/5',  accentColor: 'rgba(51,170,51,0.5)' },
 ]
 
 function useCountUp(target, duration = 1200, start = false) {
@@ -58,10 +59,10 @@ export default function Landing({ onEnter }) {
   const statsRef = useRef(null)
 
   const STATS = [
-    { value: 187,   labelKey: 'landing.stat.pokemon', isNumber: true },
-    { value: 59,    labelKey: 'landing.stat.megas',   isNumber: true },
-    { value: 6,     labelKey: 'landing.stat.tools',   isNumber: true },
-    { value: 'M-A', labelKey: 'landing.stat.reg',     isNumber: false },
+    { value: 187, labelKey: 'landing.stat.pokemon', isNumber: true },
+    { value: 59,  labelKey: 'landing.stat.megas',   isNumber: true },
+    { value: 7,   labelKey: 'landing.stat.tools',   isNumber: true },
+    { value: 'M-A', labelKey: 'landing.stat.reg',   isNumber: false },
   ]
 
   useEffect(() => { setTimeout(() => setVisible(true), 100) }, [])
@@ -86,7 +87,6 @@ export default function Landing({ onEnter }) {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none"
         style={{ background: 'radial-gradient(ellipse, rgba(240,192,64,0.08) 0%, transparent 70%)' }} />
 
-      {/* Lang toggle */}
       <div className="absolute top-4 right-4 z-20">
         <LangToggle lang={lang} />
       </div>
