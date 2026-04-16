@@ -3,19 +3,17 @@ import TypeChart from './TypeChart'
 import RivalAnalysis from './RivalAnalysis'
 import TierList from './TierList'
 import DamageCalc from './DamageCalc'
-import TeamGenerator from './TeamGenerator'
 import InGame from './InGame'
 import SpeedTiers from './SpeedTiers'
 import { useLang, toggleLang } from './lang'
 
 const TABS = [
-  { id: 'generator', labelKey: 'tool.generator.title', shortLabel: 'Generator', icon: '🧬', color: '#aa44ff' },
-  { id: 'analysis',  labelKey: 'tool.analysis.title',  shortLabel: 'Analysis',  icon: '⚔️', color: '#f0c040' },
-  { id: 'ingame',    labelKey: 'tool.ingame.title',     shortLabel: 'In-Game',   icon: '⚡', color: '#ff4422' },
-  { id: 'damage',    labelKey: 'tool.damage.title',     shortLabel: 'Damage',    icon: '💥', color: '#ff8844' },
-  { id: 'tierlist',  labelKey: 'tool.tierlist.title',   shortLabel: 'Tiers',     icon: '📊', color: '#33aaff' },
-  { id: 'speedtiers',labelKey: 'tool.speedtiers.title', shortLabel: 'Speed',     icon: '🏃', color: '#33cc88' },
-  { id: 'types',     labelKey: 'tool.types.title',      shortLabel: 'Types',     icon: '🔷', color: '#33aa33' },
+  { id: 'analysis',   labelKey: 'tool.analysis.title',   shortLabel: 'Analysis',  icon: '⚔️', color: '#f0c040' },
+  { id: 'ingame',     labelKey: 'tool.ingame.title',      shortLabel: 'In-Game',   icon: '⚡', color: '#ff4422' },
+  { id: 'damage',     labelKey: 'tool.damage.title',      shortLabel: 'Damage',    icon: '💥', color: '#ff8844' },
+  { id: 'tierlist',   labelKey: 'tool.tierlist.title',    shortLabel: 'Tiers',     icon: '📊', color: '#33aaff' },
+  { id: 'speedtiers', labelKey: 'tool.speedtiers.title',  shortLabel: 'Speed',     icon: '🏃', color: '#33cc88' },
+  { id: 'types',      labelKey: 'tool.types.title',       shortLabel: 'Types',     icon: '🔷', color: '#33aa33' },
 ]
 
 function LangToggle({ lang }) {
@@ -31,10 +29,10 @@ function LangToggle({ lang }) {
 
 export default function TeamBuilder({ startTab = 'analysis', onBack }) {
   const { t, lang } = useLang()
-  const [activeTab, setActiveTab] = useState(startTab)
+  const [activeTab, setActiveTab] = useState(startTab === 'generator' ? 'analysis' : startTab)
   const [contentVisible, setContentVisible] = useState(true)
 
-  const currentTab = TABS.find(tab => tab.id === activeTab)
+  const currentTab = TABS.find(tab => tab.id === activeTab) || TABS[0]
 
   function handleTabChange(tabId) {
     if (tabId === activeTab) return
@@ -87,7 +85,6 @@ export default function TeamBuilder({ startTab = 'analysis', onBack }) {
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-8 transition-opacity duration-150"
         style={{ opacity: contentVisible ? 1 : 0 }}>
-        {activeTab === 'generator'  && <TeamGenerator />}
         {activeTab === 'analysis'   && <RivalAnalysis />}
         {activeTab === 'ingame'     && <InGame />}
         {activeTab === 'damage'     && <DamageCalc />}

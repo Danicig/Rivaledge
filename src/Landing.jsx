@@ -2,13 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { useLang, toggleLang } from './lang'
 
 const TOOLS = [
-  { id: 'generator',  icon: '🧬', titleKey: 'tool.generator.title',  descKey: 'tool.generator.desc',  color: '#aa44ff', border: 'border-purple-400/30', bg: 'bg-purple-400/5', accentColor: 'rgba(170,68,255,0.5)' },
-  { id: 'analysis',   icon: '⚔️', titleKey: 'tool.analysis.title',   descKey: 'tool.analysis.desc',   color: '#f0c040', border: 'border-yellow-400/30', bg: 'bg-yellow-400/5', accentColor: 'rgba(240,192,64,0.5)' },
-  { id: 'ingame',     icon: '⚡', titleKey: 'tool.ingame.title',     descKey: 'tool.ingame.desc',     color: '#ff4422', border: 'border-red-400/30',    bg: 'bg-red-400/5',    accentColor: 'rgba(255,68,34,0.5)' },
-  { id: 'damage',     icon: '💥', titleKey: 'tool.damage.title',     descKey: 'tool.damage.desc',     color: '#ff8844', border: 'border-orange-400/30', bg: 'bg-orange-400/5', accentColor: 'rgba(255,136,68,0.5)' },
-  { id: 'tierlist',   icon: '📊', titleKey: 'tool.tierlist.title',   descKey: 'tool.tierlist.desc',   color: '#33aaff', border: 'border-blue-400/30',   bg: 'bg-blue-400/5',   accentColor: 'rgba(51,170,255,0.5)' },
-  { id: 'speedtiers', icon: '🏃', titleKey: 'tool.speedtiers.title', descKey: 'tool.speedtiers.desc', color: '#33cc88', border: 'border-emerald-400/30',bg: 'bg-emerald-400/5', accentColor: 'rgba(51,204,136,0.5)' },
-  { id: 'types',      icon: '🔷', titleKey: 'tool.types.title',      descKey: 'tool.types.desc',      color: '#33aa33', border: 'border-green-400/30',  bg: 'bg-green-400/5',  accentColor: 'rgba(51,170,51,0.5)' },
+  { id: 'analysis',   icon: '⚔️', titleKey: 'tool.analysis.title',   descKey: 'tool.analysis.desc',   color: '#f0c040', border: 'border-yellow-400/30',  bg: 'bg-yellow-400/5',  accentColor: 'rgba(240,192,64,0.5)' },
+  { id: 'ingame',     icon: '⚡', titleKey: 'tool.ingame.title',     descKey: 'tool.ingame.desc',     color: '#ff4422', border: 'border-red-400/30',     bg: 'bg-red-400/5',     accentColor: 'rgba(255,68,34,0.5)' },
+  { id: 'damage',     icon: '💥', titleKey: 'tool.damage.title',     descKey: 'tool.damage.desc',     color: '#ff8844', border: 'border-orange-400/30',  bg: 'bg-orange-400/5',  accentColor: 'rgba(255,136,68,0.5)' },
+  { id: 'tierlist',   icon: '📊', titleKey: 'tool.tierlist.title',   descKey: 'tool.tierlist.desc',   color: '#33aaff', border: 'border-blue-400/30',    bg: 'bg-blue-400/5',    accentColor: 'rgba(51,170,255,0.5)' },
+  { id: 'speedtiers', icon: '🏃', titleKey: 'tool.speedtiers.title', descKey: 'tool.speedtiers.desc', color: '#33cc88', border: 'border-emerald-400/30', bg: 'bg-emerald-400/5', accentColor: 'rgba(51,204,136,0.5)' },
+  { id: 'types',      icon: '🔷', titleKey: 'tool.types.title',      descKey: 'tool.types.desc',      color: '#33aa33', border: 'border-green-400/30',   bg: 'bg-green-400/5',   accentColor: 'rgba(51,170,51,0.5)' },
 ]
 
 function useCountUp(target, duration = 1200, start = false) {
@@ -59,10 +58,10 @@ export default function Landing({ onEnter }) {
   const statsRef = useRef(null)
 
   const STATS = [
-    { value: 187, labelKey: 'landing.stat.pokemon', isNumber: true },
-    { value: 59,  labelKey: 'landing.stat.megas',   isNumber: true },
-    { value: 7,   labelKey: 'landing.stat.tools',   isNumber: true },
-    { value: 'M-A', labelKey: 'landing.stat.reg',   isNumber: false },
+    { value: 187,   labelKey: 'landing.stat.pokemon', isNumber: true },
+    { value: 59,    labelKey: 'landing.stat.megas',   isNumber: true },
+    { value: 6,     labelKey: 'landing.stat.tools',   isNumber: true },
+    { value: 'M-A', labelKey: 'landing.stat.reg',     isNumber: false },
   ]
 
   useEffect(() => { setTimeout(() => setVisible(true), 100) }, [])
@@ -105,7 +104,7 @@ export default function Landing({ onEnter }) {
         <p className="font-mono-tech text-lg text-[#8899aa] mb-4 tracking-wide max-w-xl">{t('landing.tagline')}</p>
         <p className="text-[#4a6070] text-sm max-w-lg mb-12 leading-relaxed">{t('landing.desc')}</p>
 
-        <button onClick={() => onEnter('generator')}
+        <button onClick={() => onEnter('analysis')}
           className="group relative px-12 py-4 bg-yellow-400 text-black font-orbitron font-black text-sm tracking-widest uppercase rounded-xl transition-all duration-300 hover:scale-105 active:scale-100 mb-4 overflow-hidden"
           style={{ boxShadow: '0 0 40px rgba(240,192,64,0.4)' }}>
           <span className="relative z-10">{t('landing.cta')}</span>
