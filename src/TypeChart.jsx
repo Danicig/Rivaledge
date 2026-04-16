@@ -4,6 +4,14 @@ import { useLang } from './lang'
 
 const darkText = ['electric','ice','flying','rock','steel','fairy','normal']
 
+const TIPO_NAMES_ES = {
+  normal: 'Normal', fire: 'Fuego', water: 'Agua', grass: 'Planta',
+  electric: 'Eléctrico', ice: 'Hielo', fighting: 'Lucha', poison: 'Veneno',
+  ground: 'Tierra', flying: 'Volador', psychic: 'Psíquico', bug: 'Bicho',
+  rock: 'Roca', ghost: 'Fantasma', dragon: 'Dragón', dark: 'Siniestro',
+  steel: 'Acero', fairy: 'Hada',
+}
+
 function getLabel(val) {
   if (val === 0)    return '0'
   if (val === 0.25) return '¼'
@@ -37,22 +45,33 @@ function getTextColor(val) {
 const SIZE = 36
 
 export default function TypeChart() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [hoveredRow, setHoveredRow] = useState(null)
   const [hoveredCol, setHoveredCol] = useState(null)
   const [selectedAtk, setSelectedAtk] = useState(null)
   const [tooltip, setTooltip] = useState(null)
 
+  function getTypeName(type) {
+    if (lang === 'es') return TIPO_NAMES_ES[type] || type
+    return type
+  }
+
+  // Para la tabla usamos abreviatura — 3 chars en EN, hasta 3 en ES
+  function getTypeAbbr(type) {
+    if (lang === 'es') {
+      const name = TIPO_NAMES_ES[type] || type
+      return name.slice(0, 3).toUpperCase()
+    }
+    return type.slice(0, 3).toUpperCase()
+  }
+
   function handleCellEnter(rowIdx, colIdx, val) {
-    setHoveredRow(rowIdx)
-    setHoveredCol(colIdx)
+    setHoveredRow(rowIdx); setHoveredCol(colIdx)
     setTooltip({ atk: TIPOS[rowIdx], def: TIPOS[colIdx], val })
   }
 
   function handleCellLeave() {
-    setHoveredRow(null)
-    setHoveredCol(null)
-    setTooltip(null)
+    setHoveredRow(null); setHoveredCol(null); setTooltip(null)
   }
 
   function handleAtkClick(type) {
@@ -78,14 +97,16 @@ export default function TypeChart() {
       {/* Legend */}
       <div className="flex flex-wrap gap-2 mb-4">
         {[
-          { label: '×4 Super Effective', bg: '#5a0000', color: '#ff4422' },
-          { label: '×2 Super Effective', bg: '#3a1a00', color: '#ff8844' },
-          { label: '×1 Normal',          bg: '#111820', color: '#4a6070' },
-          { label: '×½ Not Very',        bg: '#1a3a1a', color: '#66cc66' },
-          { label: '×0 Immune',          bg: '#1a1a2e', color: '#3355aa' },
+          { labelES: '×4 Súper Efectivo', labelEN: '×4 Super Effective', bg: '#5a0000', color: '#ff4422' },
+          { labelES: '×2 Súper Efectivo', labelEN: '×2 Super Effective', bg: '#3a1a00', color: '#ff8844' },
+          { labelES: '×1 Normal',         labelEN: '×1 Normal',          bg: '#111820', color: '#4a6070' },
+          { labelES: '×½ Poco Efectivo',  labelEN: '×½ Not Very',        bg: '#1a3a1a', color: '#66cc66' },
+          { labelES: '×0 Inmune',         labelEN: '×0 Immune',          bg: '#1a1a2e', color: '#3355aa' },
         ].map(l => (
-          <div key={l.label} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: l.bg }}>
-            <span className="font-mono-tech text-xs font-bold" style={{ color: l.color }}>{l.label}</span>
+          <div key={l.labelEN} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: l.bg }}>
+            <span className="font-mono-tech text-xs font-bold" style={{ color: l.color }}>
+              {lang === 'es' ? l.labelES : l.labelEN}
+            </span>
           </div>
         ))}
       </div>
@@ -103,7 +124,7 @@ export default function TypeChart() {
                 outline: selectedAtk === type ? `2px solid ${TIPO_COLORS[type]}` : 'none',
                 outlineOffset: 2,
               }}>
-              {type}
+              {getTypeName(type)}
             </button>
           ))}
         </div>
@@ -115,12 +136,12 @@ export default function TypeChart() {
           <div className="flex items-center gap-2">
             <span className="font-mono-tech text-xs px-2 py-0.5 rounded font-bold"
               style={{ background: TIPO_COLORS[tooltip.atk], color: darkText.includes(tooltip.atk) ? '#111' : '#fff' }}>
-              {tooltip.atk}
+              {getTypeName(tooltip.atk)}
             </span>
             <span className="font-mono-tech text-xs text-[#4a6070]">→</span>
             <span className="font-mono-tech text-xs px-2 py-0.5 rounded font-bold"
               style={{ background: TIPO_COLORS[tooltip.def], color: darkText.includes(tooltip.def) ? '#111' : '#fff' }}>
-              {tooltip.def}
+              {getTypeName(tooltip.def)}
             </span>
             <span className="font-mono-tech text-xs font-bold" style={{ color: getTextColor(tooltip.val) }}>
               ×{tooltip.val}
@@ -146,7 +167,7 @@ export default function TypeChart() {
                     letterSpacing: 1, textTransform: 'uppercase',
                     outline: hoveredCol === colIdx ? '2px solid rgba(255,255,255,0.3)' : 'none',
                   }}>
-                    {type.slice(0, 3)}
+                    {getTypeAbbr(type)}
                   </div>
                 </th>
               ))}
@@ -169,7 +190,7 @@ export default function TypeChart() {
                       letterSpacing: 1, textTransform: 'uppercase', cursor: 'pointer',
                       outline: isSelectedRow || hoveredRow === rowIdx ? '2px solid rgba(255,255,255,0.3)' : 'none',
                     }}>
-                      {atkType.slice(0, 3)}
+                      {getTypeAbbr(atkType)}
                     </div>
                   </td>
                   {TIPOS.map((defType, colIdx) => {

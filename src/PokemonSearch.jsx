@@ -5,6 +5,14 @@ import { useLang } from './lang'
 
 const darkText = ['electric','ice','flying','rock','steel','fairy','normal']
 
+const TIPO_NAMES_ES = {
+  normal: 'Normal', fire: 'Fuego', water: 'Agua', grass: 'Planta',
+  electric: 'Eléctrico', ice: 'Hielo', fighting: 'Lucha', poison: 'Veneno',
+  ground: 'Tierra', flying: 'Volador', psychic: 'Psíquico', bug: 'Bicho',
+  rock: 'Roca', ghost: 'Fantasma', dragon: 'Dragón', dark: 'Siniestro',
+  steel: 'Acero', fairy: 'Hada',
+}
+
 function HighlightMatch({ text, query }) {
   if (!query) return <span>{text}</span>
   const idx = text.toLowerCase().indexOf(query.toLowerCase())
@@ -22,19 +30,14 @@ function PokemonSprite({ pokemon, size = 40 }) {
   const url = getSpriteUrl(pokemon.spriteId)
   if (!url) return null
   return (
-    <img
-      src={url}
-      alt={pokemon.name}
-      width={size}
-      height={size}
+    <img src={url} alt={pokemon.name} width={size} height={size}
       style={{ imageRendering: 'pixelated', flexShrink: 0 }}
-      onError={e => { e.target.style.display = 'none' }}
-    />
+      onError={e => { e.target.style.display = 'none' }} />
   )
 }
 
 export default function PokemonSearch({ onAdd, maxReached, placeholder }) {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [showManual, setShowManual] = useState(false)
@@ -84,6 +87,10 @@ export default function PokemonSearch({ onAdd, maxReached, placeholder }) {
     const p = { name: manualName.trim(), types: manualTypes }
     POKEDEX.push(p); onAdd(p)
     setShowManual(false); setManualName(''); setManualTypes([]); setQuery(''); setResults([])
+  }
+
+  function getTypeName(type) {
+    return lang === 'es' ? TIPO_NAMES_ES[type] || type : type
   }
 
   const ph = placeholder || t('ps.placeholder')
@@ -150,7 +157,7 @@ export default function PokemonSearch({ onAdd, maxReached, placeholder }) {
               <button key={type} onClick={() => toggleManualType(type)}
                 style={{ background: TIPO_COLORS[type], color: darkText.includes(type) ? '#111' : '#fff', opacity: manualTypes.includes(type) ? 1 : 0.35, outline: manualTypes.includes(type) ? '2px solid white' : 'none', outlineOffset: 1 }}
                 className="text-xs font-bold px-2 py-1 rounded uppercase tracking-wide transition-all">
-                {type}
+                {getTypeName(type)}
               </button>
             ))}
           </div>
