@@ -15,55 +15,181 @@ function PokemonSprite({ pokemon, size = 48 }) {
   )
 }
 
-function getMatchupScore(myP, rivalLeads) {
-  let offScore = 0, defScore = 0
-  rivalLeads.forEach(rp => {
-    const bestOff = Math.max(...myP.types.map(t => getEff(t, rp.types)))
-    if (bestOff >= 4) offScore += 40
-    else if (bestOff >= 2) offScore += 20
-    else if (bestOff === 1) offScore += 5
-    else offScore -= 5
-    const worstDef = Math.max(...rp.types.map(t => getEff(t, myP.types)))
-    if (worstDef >= 4) defScore -= 35
-    else if (worstDef >= 2) defScore -= 15
-    else if (worstDef <= 0) defScore += 20
-    else if (worstDef <= 0.5) defScore += 10
+// ─── LÓGICA COMPETITIVA REAL ───────────────────────────────────────────────
+//
+// Para cada Pokémon propio vs cada rival, calculamos:
+//   - incomingMax: el mayor multiplicador de daño que recibe (amenaza defensiva)
+//   - outgoingMax: el mayor multiplicador que puede infligir (cobertura ofensiva)
+//
+// Scoring individual vs UN rival:
+//   Defensiva (lo que nos pueden hacer):
+//     ×4 entrante → -60  (peligro crítico — casi seguro KO en 1 turno)
+//     ×2 entrante → -25  (peligro significativo)
+//     ×1 entrante → 0
+//     ×0.5 entrante → +15 (resistencia útil)
+//     ×0 entrante → +30  (inmunidad — muy valioso)
+//
+//   Ofensiva (lo que podemos hacer):
+//     ×4 saliente → +50  (OHKO casi garantizado)
+//     ×2 saliente → +25  (ventaja ofensiva clara)
+//     ×1 saliente → +5
+//     ×0.5 saliente → -5 (resistido)
+//     ×0 saliente → -10  (bloqueado)
+//
+// Score total = suma vs ambos rivales
+// Luego calculamos flags de peligro y recomendación de cambio
+
+function analyzeMatchup(myP, rivalLeads) {
+  let totalScore = 0
+  const details = rivalLeads.map(rp => {
+    // Defensa: lo que el rival nos puede hacer
+    const incomingMult = Math.max(...rp.types.map(rt => getEff(rt, myP.types)))
+    // Ofensa: lo que nosotros le podemos hacer
+    const outgoingMult = Math.max(...myP.types.map(mt => getEff(mt, rp.types)))
+
+    let defScore = 0
+    if (incomingMult >= 4)       defScore = -60
+    else if (incomingMult >= 2)  defScore = -25
+    else if (incomingMult <= 0)  defScore = +30
+    else if (incomingMult <= 0.5) defScore = +15
+
+    let offScore = 0
+    if (outgoingMult >= 4)       offScore = +50
+    else if (outgoingMult >= 2)  offScore = +25
+    else if (outgoingMult === 1) offScore = +5
+    else if (outgoingMult <= 0)  offScore = -10
+    else if (outgoingMult <= 0.5) offScore = -5
+
+    totalScore += defScore + offScore
+
+    return {
+      rival: rp,
+      incomingMult,
+      outgoingMult,
+      defScore,
+      offScore,
+    }
   })
-  return { offScore, defScore, total: offScore + defScore }
+
+  // Flags de peligro — evaluamos cada rival por separado
+  const criticalDanger  = details.some(d => d.incomingMult >= 4)   // ×4 de algún rival
+  const significantDanger = details.filter(d => d.incomingMult >= 2).length // cuántos rivales nos golpean ×2+
+  const doubleWeakness  = details.every(d => d.incomingMult >= 2)  // ×2 de AMBOS rivales
+  const hasOffCoverage  = details.some(d => d.outgoingMult >= 2)   // golpeamos SE a alguno
+  const hasFullCoverage = details.every(d => d.outgoingMult >= 2)  // golpeamos SE a ambos
+
+  return {
+    score: totalScore,
+    details,
+    criticalDanger,
+    significantDanger,
+    doubleWeakness,
+    hasOffCoverage,
+    hasFullCoverage,
+  }
 }
 
-function getVerdict(total) {
-  if (total >= 60)  return { label: '✅ Ventaja clara',      labelEN: '✅ Clear advantage',     color: 'text-green-400',  bg: 'bg-green-900/20',  border: 'border-green-500/30' }
-  if (total >= 20)  return { label: '🟡 Ligera ventaja',    labelEN: '🟡 Slight advantage',    color: 'text-yellow-400', bg: 'bg-yellow-900/20', border: 'border-yellow-500/30' }
-  if (total >= -20) return { label: '⚖️ Matchup neutro',    labelEN: '⚖️ Neutral matchup',     color: 'text-[#8899aa]',  bg: 'bg-[#111820]',     border: 'border-[#1c2830]' }
-  if (total >= -50) return { label: '🟠 Ligera desventaja', labelEN: '🟠 Slight disadvantage', color: 'text-orange-400', bg: 'bg-orange-900/20', border: 'border-orange-500/30' }
-  return             { label: '❌ Desventaja clara',         labelEN: '❌ Clear disadvantage',  color: 'text-red-400',    bg: 'bg-red-900/20',    border: 'border-red-500/30' }
+// Genera el mensaje de razón de cambio específico
+function getSwitchReason(myPokemon, analysis, rivalLeads, lang) {
+  const threats = analysis.details.filter(d => d.incomingMult >= 2)
+  if (analysis.criticalDanger) {
+    const threat = analysis.details.find(d => d.incomingMult >= 4)
+    return lang === 'es'
+      ? `${myPokemon.name} recibe daño ×4 de ${threat.rival.name} — cambio urgente`
+      : `${myPokemon.name} takes ×4 damage from ${threat.rival.name} — urgent switch`
+  }
+  if (analysis.doubleWeakness) {
+    return lang === 'es'
+      ? `${myPokemon.name} es débil ×2 a ${threats.map(t => t.rival.name).join(' y ')} — muy expuesto`
+      : `${myPokemon.name} is ×2 weak to ${threats.map(t => t.rival.name).join(' and ')} — too exposed`
+  }
+  if (threats.length === 1) {
+    return lang === 'es'
+      ? `${myPokemon.name} es débil ×2 a ${threats[0].rival.name}`
+      : `${myPokemon.name} is ×2 weak to ${threats[0].rival.name}`
+  }
+  return ''
+}
+
+// Evalúa qué tan bueno es un Pokémon del banco como reemplazo
+function evaluateAsSwitch(p, rivalLeads) {
+  const analysis = analyzeMatchup(p, rivalLeads)
+  // Penalizar mucho si tiene debilidades, premiar si resiste ambos y golpea SE
+  let switchScore = analysis.score
+  if (analysis.criticalDanger) switchScore -= 50
+  if (analysis.doubleWeakness) switchScore -= 30
+  if (analysis.hasFullCoverage) switchScore += 20
+  return { pokemon: p, analysis, switchScore }
+}
+
+function getVerdict(myLeadAnalyses, lang) {
+  const hasCritical = myLeadAnalyses.some(a => a.criticalDanger)
+  const hasDouble   = myLeadAnalyses.some(a => a.doubleWeakness)
+  const avgScore    = myLeadAnalyses.reduce((s, a) => s + a.score, 0)
+  const bothGood    = myLeadAnalyses.every(a => !a.doubleWeakness && !a.criticalDanger && a.score >= 0)
+  const bothSuperEff = myLeadAnalyses.every(a => a.hasOffCoverage)
+
+  if (hasCritical) return {
+    label: '🚨 CAMBIO URGENTE', labelEN: '🚨 URGENT SWITCH',
+    color: 'text-red-400', bg: 'bg-red-950/40', border: 'border-red-500/40',
+    desc: lang === 'es' ? 'Uno de tus Pokémon recibe ×4 de daño. Cambia ahora.' : 'One of your Pokémon takes ×4 damage. Switch now.',
+    forceSwitch: true,
+  }
+  if (hasDouble) return {
+    label: '⚠️ Desventaja clara', labelEN: '⚠️ Clear disadvantage',
+    color: 'text-orange-400', bg: 'bg-orange-950/30', border: 'border-orange-500/30',
+    desc: lang === 'es' ? 'Un Pokémon es débil a ambos rivales. Considera cambiar.' : 'A Pokémon is weak to both rivals. Consider switching.',
+    forceSwitch: false,
+  }
+  if (avgScore >= 60 && bothSuperEff) return {
+    label: '✅ Ventaja dominante', labelEN: '✅ Dominant advantage',
+    color: 'text-green-400', bg: 'bg-green-950/30', border: 'border-green-500/30',
+    desc: lang === 'es' ? 'Tu lead domina ofensiva y defensivamente. Mantén.' : 'Your lead dominates offensively and defensively. Keep it.',
+    forceSwitch: false,
+  }
+  if (avgScore >= 20 || bothGood) return {
+    label: '🟢 Ventaja', labelEN: '🟢 Advantage',
+    color: 'text-green-400', bg: 'bg-green-950/20', border: 'border-green-900/30',
+    desc: lang === 'es' ? 'Buen matchup. Mantén tu lead.' : 'Good matchup. Keep your lead.',
+    forceSwitch: false,
+  }
+  if (avgScore >= -20) return {
+    label: '⚖️ Matchup neutro', labelEN: '⚖️ Neutral matchup',
+    color: 'text-[#8899aa]', bg: 'bg-[#111820]', border: 'border-[#1c2830]',
+    desc: lang === 'es' ? 'Matchup equilibrado. Depende de la estrategia.' : 'Balanced matchup. Depends on your strategy.',
+    forceSwitch: false,
+  }
+  return {
+    label: '🟠 Ligera desventaja', labelEN: '🟠 Slight disadvantage',
+    color: 'text-orange-400', bg: 'bg-orange-950/20', border: 'border-orange-900/30',
+    desc: lang === 'es' ? 'Matchup desfavorable. Valora si hay mejor opción en el banco.' : 'Unfavorable matchup. Check if you have a better option on the bench.',
+    forceSwitch: false,
+  }
+}
+
+function MultBadge({ mult }) {
+  if (mult >= 4) return <span className="font-mono-tech text-xs font-bold text-red-400 bg-red-900/30 px-1.5 py-0.5 rounded">×4 🔥</span>
+  if (mult >= 2) return <span className="font-mono-tech text-xs font-bold text-orange-400 bg-orange-900/30 px-1.5 py-0.5 rounded">×2</span>
+  if (mult <= 0) return <span className="font-mono-tech text-xs font-bold text-blue-400 bg-blue-900/30 px-1.5 py-0.5 rounded">×0 inmune</span>
+  if (mult <= 0.5) return <span className="font-mono-tech text-xs font-bold text-green-400 bg-green-900/30 px-1.5 py-0.5 rounded">×½ resiste</span>
+  return <span className="font-mono-tech text-xs text-[#4a6070]">×1</span>
 }
 
 export default function InGame() {
   const { lang } = useLang()
-  const { myTeam, rivalTeam, addRivalPokemon, removeRivalPokemon, clearRivalTeam } = useTeam()
+  const { myTeam, rivalTeam, addRivalPokemon } = useTeam()
 
   const [myLead, setMyLead] = useState([])
   const [rivalLead, setRivalLead] = useState([])
 
   function toggleMyLead(p) {
-    if (myLead.find(x => x.name === p.name)) {
-      setMyLead(myLead.filter(x => x.name !== p.name))
-    } else {
-      if (myLead.length >= 2) return
-      setMyLead([...myLead, p])
-    }
+    if (myLead.find(x => x.name === p.name)) setMyLead(myLead.filter(x => x.name !== p.name))
+    else { if (myLead.length >= 2) return; setMyLead([...myLead, p]) }
   }
 
-  // El lead rival se selecciona de rivalTeam (si hay) o se busca manualmente
   function toggleRivalLead(p) {
-    if (rivalLead.find(x => x.name === p.name)) {
-      setRivalLead(rivalLead.filter(x => x.name !== p.name))
-    } else {
-      if (rivalLead.length >= 2) return
-      setRivalLead([...rivalLead, p])
-    }
+    if (rivalLead.find(x => x.name === p.name)) setRivalLead(rivalLead.filter(x => x.name !== p.name))
+    else { if (rivalLead.length >= 2) return; setRivalLead([...rivalLead, p]) }
   }
 
   function addManualRival(p) {
@@ -73,17 +199,35 @@ export default function InGame() {
 
   function reset() { setMyLead([]); setRivalLead([]) }
 
-  const myLeadScores   = myLead.map(p => ({ pokemon: p, ...getMatchupScore(p, rivalLead) }))
-  const benchScores    = myTeam.filter(p => !myLead.find(l => l.name === p.name)).map(p => ({ pokemon: p, ...getMatchupScore(p, rivalLead) })).sort((a, b) => b.total - a.total)
-  const totalLeadScore = myLeadScores.reduce((sum, s) => sum + s.total, 0)
-  const verdict        = rivalLead.length > 0 && myLead.length > 0 ? getVerdict(totalLeadScore) : null
-  const bestSwitch     = benchScores[0]
-  const shouldSwitch   = verdict && totalLeadScore < -20 && bestSwitch && bestSwitch.total > totalLeadScore
-  const canAnalyze     = myLead.length === 2 && rivalLead.length === 2
+  const canAnalyze = myLead.length === 2 && rivalLead.length === 2
+
+  // Análisis completo — solo cuando hay datos
+  const myLeadAnalyses = canAnalyze ? myLead.map(p => ({ pokemon: p, ...analyzeMatchup(p, rivalLead) })) : []
+  const verdict = canAnalyze ? getVerdict(myLeadAnalyses, lang) : null
+
+  // Banco — ordenado por switchScore
+  const bench = canAnalyze
+    ? myTeam.filter(p => !myLead.find(l => l.name === p.name))
+        .map(p => evaluateAsSwitch(p, rivalLead))
+        .sort((a, b) => b.switchScore - a.switchScore)
+    : []
+
+  // Pokémon del lead que debería cambiar (el peor)
+  const worstLead = myLeadAnalyses.length > 0
+    ? myLeadAnalyses.reduce((worst, curr) => curr.score < worst.score ? curr : worst)
+    : null
+
+  // Mejor sustituto del banco
+  const bestSwitch = bench[0]
+
+  // ¿Recomendar cambio?
+  const shouldSwitch = verdict && (
+    verdict.forceSwitch ||
+    (worstLead && (worstLead.criticalDanger || worstLead.doubleWeakness) && bestSwitch && bestSwitch.switchScore > worstLead.score)
+  )
 
   return (
     <div>
-
       {/* Header */}
       <div className="mb-6 bg-[#0c1015] border border-red-500/20 rounded-xl p-5">
         <div className="flex items-center gap-3 mb-1">
@@ -92,13 +236,12 @@ export default function InGame() {
         </div>
         <p className="text-sm text-[#8899aa]">
           {lang === 'es'
-            ? 'Selecciona tus 2 leads y los 2 del rival. Te decimos si tienes ventaja o deberías cambiar.'
-            : 'Select your 2 leads and the rival\'s 2. We tell you if you have an advantage or should switch.'}
+            ? 'Selecciona tus 2 leads y los 2 del rival. Análisis competitivo real — debilidades, coberturas y cambios.'
+            : 'Select your 2 leads and the rival\'s 2. Real competitive analysis — weaknesses, coverage and switches.'}
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-
         {/* MI LEAD */}
         <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-hidden">
           <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830] flex items-center justify-between">
@@ -117,12 +260,8 @@ export default function InGame() {
           <div className="p-4">
             {myTeam.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-[#4a6070] text-sm italic mb-1">
-                  {lang === 'es' ? 'Tu equipo está vacío' : 'Your team is empty'}
-                </p>
-                <p className="text-[#2a3840] text-xs font-mono-tech">
-                  {lang === 'es' ? 'Añade tu equipo en Rival Analysis primero' : 'Add your team in Rival Analysis first'}
-                </p>
+                <p className="text-[#4a6070] text-sm italic mb-1">{lang === 'es' ? 'Tu equipo está vacío' : 'Your team is empty'}</p>
+                <p className="text-[#2a3840] text-xs font-mono-tech">{lang === 'es' ? 'Añade tu equipo en Rival Analysis primero' : 'Add your team in Rival Analysis first'}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -136,13 +275,9 @@ export default function InGame() {
                         : isDisabled ? 'border-[#1c2830] bg-[#0c1015] opacity-30 cursor-not-allowed'
                         : 'border-[#1c2830] bg-[#111820] hover:border-yellow-400/30 hover:bg-yellow-400/5'
                       }`}>
-                      <div className="flex justify-center mb-1">
-                        <PokemonSprite pokemon={p} size={44} />
-                      </div>
+                      <div className="flex justify-center mb-1"><PokemonSprite pokemon={p} size={44} /></div>
                       <p className="font-bold text-white text-xs truncate">{p.name}</p>
-                      <div className="flex justify-center gap-1 mt-1 flex-wrap">
-                        {p.types.map(type => <TypeBadge key={type} type={type} size="sm" />)}
-                      </div>
+                      <div className="flex justify-center gap-1 mt-1 flex-wrap">{p.types.map(type => <TypeBadge key={type} type={type} size="sm" />)}</div>
                       {isSelected && <p className="font-mono-tech text-xs text-yellow-400 mt-1">✓ LEAD</p>}
                     </button>
                   )
@@ -157,10 +292,10 @@ export default function InGame() {
           <div className="bg-[#111820] px-5 py-3.5 border-b border-red-400/20 flex items-center justify-between">
             <div>
               <h2 className="font-orbitron text-sm font-bold tracking-widest uppercase text-red-400">
-                {lang === 'es' ? 'Lead del Rival' : 'Rival\'s Lead'}
+                {lang === 'es' ? 'Lead del Rival' : "Rival's Lead"}
               </h2>
               <p className="font-mono-tech text-xs text-[#4a6070] mt-0.5">
-                {lang === 'es' ? 'Selecciona o añade los 2 del rival' : 'Select or add the rival\'s 2'}
+                {lang === 'es' ? 'Selecciona o añade los 2 del rival' : "Select or add the rival's 2"}
               </p>
             </div>
             <span className={`font-mono-tech text-xs px-2.5 py-1 rounded border ${rivalLead.length === 2 ? 'text-red-400 bg-red-400/10 border-red-400/20' : 'text-[#4a6070] bg-[#0c1015] border-[#1c2830]'}`}>
@@ -168,8 +303,6 @@ export default function InGame() {
             </span>
           </div>
           <div className="p-4 overflow-visible">
-
-            {/* Si hay equipo rival guardado, muéstralo para seleccionar */}
             {rivalTeam.length > 0 ? (
               <>
                 <p className="font-mono-tech text-xs text-red-400/60 mb-3">
@@ -186,13 +319,9 @@ export default function InGame() {
                           : isDisabled ? 'border-[#1c2830] bg-[#0c1015] opacity-30 cursor-not-allowed'
                           : 'border-[#1c2830] bg-[#111820] hover:border-red-400/30 hover:bg-red-400/5'
                         }`}>
-                        <div className="flex justify-center mb-1">
-                          <PokemonSprite pokemon={p} size={44} />
-                        </div>
+                        <div className="flex justify-center mb-1"><PokemonSprite pokemon={p} size={44} /></div>
                         <p className="font-bold text-white text-xs truncate">{p.name}</p>
-                        <div className="flex justify-center gap-1 mt-1 flex-wrap">
-                          {p.types.map(type => <TypeBadge key={type} type={type} size="sm" />)}
-                        </div>
+                        <div className="flex justify-center gap-1 mt-1 flex-wrap">{p.types.map(type => <TypeBadge key={type} type={type} size="sm" />)}</div>
                         {isSelected && <p className="font-mono-tech text-xs text-red-400 mt-1">✓ LEAD</p>}
                       </button>
                     )
@@ -207,9 +336,7 @@ export default function InGame() {
             ) : (
               <>
                 <p className="font-mono-tech text-xs text-[#4a6070] mb-3">
-                  {lang === 'es'
-                    ? 'Añade los Pokémon que sacó el rival (o ponlos en Rival Analysis para tenerlos guardados):'
-                    : 'Add the rival\'s Pokémon (or add them in Rival Analysis to save them):'}
+                  {lang === 'es' ? 'Añade los 2 Pokémon del rival:' : "Add the rival's 2 Pokémon:"}
                 </p>
                 <PokemonSearch onAdd={addManualRival} maxReached={rivalLead.length >= 2}
                   placeholder={lang === 'es' ? 'Pokémon del rival...' : 'Rival Pokémon...'} />
@@ -237,76 +364,115 @@ export default function InGame() {
       {/* RESULTADO */}
       {canAnalyze && verdict && (
         <div className="flex flex-col gap-4">
+
+          {/* Veredicto principal */}
           <div className={`rounded-xl border p-5 ${verdict.border} ${verdict.bg}`}>
-            <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
-              <div>
-                <p className={`font-orbitron text-xl font-black ${verdict.color}`}>
-                  {lang === 'es' ? verdict.label : verdict.labelEN}
-                </p>
-                <p className="font-mono-tech text-xs text-[#4a6070] mt-1">
-                  {lang === 'es'
-                    ? `Score combinado de tu lead: ${totalLeadScore > 0 ? '+' : ''}${totalLeadScore}`
-                    : `Combined lead score: ${totalLeadScore > 0 ? '+' : ''}${totalLeadScore}`}
-                </p>
-              </div>
+            <div className="flex items-center justify-between flex-wrap gap-3 mb-2">
+              <p className={`font-orbitron text-xl font-black ${verdict.color}`}>
+                {lang === 'es' ? verdict.label : verdict.labelEN}
+              </p>
               <button onClick={reset}
                 className="font-mono-tech text-xs text-[#4a6070] hover:text-yellow-400 transition-colors border border-[#1c2830] px-3 py-1.5 rounded-lg">
                 {lang === 'es' ? 'Nuevo turno' : 'New turn'}
               </button>
             </div>
+            <p className="font-mono-tech text-sm text-[#8899aa] mb-4">{verdict.desc}</p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-              {myLeadScores.map(s => {
-                const v = getVerdict(s.total)
+            {/* Análisis individual de cada lead */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {myLeadAnalyses.map(({ pokemon, details, criticalDanger, doubleWeakness, hasOffCoverage, score }) => {
+                const danger = criticalDanger ? 'border-red-500/50 bg-red-950/30' : doubleWeakness ? 'border-orange-500/30 bg-orange-950/20' : 'border-white/5 bg-[#0c1015]/60'
                 return (
-                  <div key={s.pokemon.name} className="bg-[#0c1015]/60 rounded-xl p-3 border border-white/5">
-                    <div className="flex items-center gap-3 mb-2">
-                      <PokemonSprite pokemon={s.pokemon} size={44} />
+                  <div key={pokemon.name} className={`rounded-xl p-3 border ${danger}`}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <PokemonSprite pokemon={pokemon} size={44} />
                       <div>
-                        <p className="font-bold text-white">{s.pokemon.name}</p>
-                        <div className="flex gap-1 mt-0.5">{s.pokemon.types.map(type => <TypeBadge key={type} type={type} size="sm" />)}</div>
+                        <p className="font-bold text-white">{pokemon.name}</p>
+                        <div className="flex gap-1 mt-0.5">{pokemon.types.map(type => <TypeBadge key={type} type={type} size="sm" />)}</div>
                       </div>
+                      {criticalDanger && <span className="ml-auto font-mono-tech text-xs text-red-400 bg-red-900/40 px-2 py-0.5 rounded">⚠ PELIGRO</span>}
                     </div>
-                    <div className="flex gap-3 text-xs font-mono-tech">
-                      <span className="text-green-400">ATK: {s.offScore > 0 ? '+' : ''}{s.offScore}</span>
-                      <span className="text-red-400">DEF: {s.defScore > 0 ? '+' : ''}{s.defScore}</span>
-                      <span className={v.color}>Total: {s.total > 0 ? '+' : ''}{s.total}</span>
+
+                    {/* Detalle vs cada rival */}
+                    <div className="flex flex-col gap-2">
+                      {details.map(d => (
+                        <div key={d.rival.name} className="bg-[#111820] rounded-lg px-3 py-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <PokemonSprite pokemon={d.rival} size={24} />
+                              <span className="font-mono-tech text-xs text-white">{d.rival.name}</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-3 flex-wrap">
+                            <div className="flex items-center gap-1">
+                              <span className="font-mono-tech text-xs text-[#4a6070]">{lang === 'es' ? 'Recibe:' : 'Takes:'}</span>
+                              <MultBadge mult={d.incomingMult} />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="font-mono-tech text-xs text-[#4a6070]">{lang === 'es' ? 'Inflige:' : 'Deals:'}</span>
+                              <MultBadge mult={d.outgoingMult} />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+
+                    {/* Razón de cambio si aplica */}
+                    {(criticalDanger || doubleWeakness) && worstLead?.pokemon.name === pokemon.name && (
+                      <p className="font-mono-tech text-xs text-orange-400 mt-2">
+                        {getSwitchReason(pokemon, { criticalDanger, doubleWeakness, details }, rivalLead, lang)}
+                      </p>
+                    )}
                   </div>
                 )
               })}
             </div>
+          </div>
 
-            {shouldSwitch && bestSwitch && (
-              <div className="bg-orange-900/20 border border-orange-500/30 rounded-xl p-4">
-                <p className="font-mono-tech text-xs text-orange-400 tracking-widest mb-3">
-                  {lang === 'es' ? '⚠️ CONSIDERA HACER UN CAMBIO' : '⚠️ CONSIDER SWITCHING'}
-                </p>
-                <div className="flex items-center gap-3">
+          {/* Recomendación de cambio */}
+          {shouldSwitch && bestSwitch && (
+            <div className={`rounded-xl border p-5 ${verdict.forceSwitch ? 'border-red-500/40 bg-red-950/30' : 'border-orange-500/30 bg-orange-950/20'}`}>
+              <p className={`font-mono-tech text-xs tracking-widest mb-3 ${verdict.forceSwitch ? 'text-red-400' : 'text-orange-400'}`}>
+                {verdict.forceSwitch
+                  ? (lang === 'es' ? '🚨 CAMBIA AHORA' : '🚨 SWITCH NOW')
+                  : (lang === 'es' ? '⚠️ CONSIDERA ESTE CAMBIO' : '⚠️ CONSIDER THIS SWITCH')}
+              </p>
+              <div className="flex items-center gap-4">
+                {/* Quién sale */}
+                {worstLead && (
+                  <>
+                    <div className="flex items-center gap-2 opacity-50">
+                      <PokemonSprite pokemon={worstLead.pokemon} size={44} />
+                      <div>
+                        <p className="font-bold text-white line-through">{worstLead.pokemon.name}</p>
+                        <p className="font-mono-tech text-xs text-red-400">{lang === 'es' ? 'Sale' : 'Out'}</p>
+                      </div>
+                    </div>
+                    <span className="text-[#4a6070] text-xl">→</span>
+                  </>
+                )}
+                {/* Quién entra */}
+                <div className="flex items-center gap-2">
                   <PokemonSprite pokemon={bestSwitch.pokemon} size={52} />
                   <div>
                     <p className="font-bold text-white text-lg">{bestSwitch.pokemon.name}</p>
                     <div className="flex gap-1 mt-1">{bestSwitch.pokemon.types.map(type => <TypeBadge key={type} type={type} />)}</div>
-                    <p className="font-mono-tech text-xs text-orange-400 mt-1">
-                      Score: {bestSwitch.total > 0 ? '+' : ''}{bestSwitch.total} {lang === 'es' ? 'vs este lead' : 'vs this lead'}
-                    </p>
+                    <div className="flex gap-3 mt-1">
+                      {bestSwitch.analysis.details.map(d => (
+                        <div key={d.rival.name} className="flex items-center gap-1">
+                          <span className="font-mono-tech text-xs text-[#4a6070]">vs {d.rival.name}:</span>
+                          <MultBadge mult={d.incomingMult} />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {!shouldSwitch && totalLeadScore >= 0 && (
-              <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-4">
-                <p className="font-mono-tech text-xs text-green-400">
-                  {lang === 'es'
-                    ? '✅ Mantén tu lead. Tienes ventaja o matchup neutro con estos Pokémon.'
-                    : '✅ Keep your lead. You have the advantage or a neutral matchup with these Pokémon.'}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {myTeam.length > 2 && (
+          {/* Banco completo ordenado */}
+          {bench.length > 0 && (
             <div className="bg-[#0c1015] border border-[#1c2830] rounded-xl overflow-hidden">
               <div className="bg-[#111820] px-5 py-3.5 border-b border-[#1c2830]">
                 <h2 className="font-orbitron text-sm font-bold tracking-widest uppercase text-[#4a6070]">
@@ -314,32 +480,29 @@ export default function InGame() {
                 </h2>
               </div>
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {benchScores.map((s, i) => {
-                  const v = getVerdict(s.total)
+                {bench.map(({ pokemon, analysis, switchScore }, i) => {
+                  const isBest = i === 0 && shouldSwitch
                   return (
-                    <div key={s.pokemon.name} className={`rounded-xl border p-3 ${i === 0 && shouldSwitch ? 'border-orange-500/30 bg-orange-900/10' : 'border-[#1c2830] bg-[#111820]'}`}>
+                    <div key={pokemon.name} className={`rounded-xl border p-3 ${isBest ? 'border-green-500/30 bg-green-950/10' : 'border-[#1c2830] bg-[#111820]'}`}>
                       <div className="flex items-center gap-3 mb-2">
-                        <PokemonSprite pokemon={s.pokemon} size={44} />
+                        <PokemonSprite pokemon={pokemon} size={40} />
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
-                            <p className="font-bold text-white">{s.pokemon.name}</p>
-                            {i === 0 && shouldSwitch && (
-                              <span className="font-mono-tech text-xs text-orange-400 bg-orange-900/30 px-2 py-0.5 rounded">
-                                {lang === 'es' ? 'MEJOR CAMBIO' : 'BEST SWITCH'}
-                              </span>
-                            )}
+                            <p className="font-bold text-white">{pokemon.name}</p>
+                            {isBest && <span className="font-mono-tech text-xs text-green-400 bg-green-900/30 px-2 py-0.5 rounded">{lang === 'es' ? 'MEJOR CAMBIO' : 'BEST SWITCH'}</span>}
                           </div>
-                          <div className="flex gap-1 mt-0.5">{s.pokemon.types.map(type => <TypeBadge key={type} type={type} size="sm" />)}</div>
+                          <div className="flex gap-1 mt-0.5">{pokemon.types.map(type => <TypeBadge key={type} type={type} size="sm" />)}</div>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-3 text-xs font-mono-tech">
-                          <span className="text-green-400">ATK: {s.offScore > 0 ? '+' : ''}{s.offScore}</span>
-                          <span className="text-red-400">DEF: {s.defScore > 0 ? '+' : ''}{s.defScore}</span>
-                        </div>
-                        <span className={`font-mono-tech text-xs font-bold ${v.color}`}>
-                          {s.total > 0 ? '+' : ''}{s.total}
-                        </span>
+                      <div className="flex flex-wrap gap-3">
+                        {analysis.details.map(d => (
+                          <div key={d.rival.name} className="flex items-center gap-1">
+                            <span className="font-mono-tech text-xs text-[#4a6070]">vs {d.rival.name}:</span>
+                            <MultBadge mult={d.incomingMult} />
+                            <span className="font-mono-tech text-xs text-[#4a6070]">/</span>
+                            <MultBadge mult={d.outgoingMult} />
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )
