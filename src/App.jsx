@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TeamBuilder from './TeamBuilder'
 import Landing from './Landing'
 import { TeamProvider } from './TeamContext'
@@ -8,12 +8,30 @@ export default function App() {
   const [startTab, setStartTab] = useState('analysis')
   const [visible, setVisible] = useState(true)
 
+  // Cuando entramos a las herramientas, añadimos un estado al historial
+  // para que el botón atrás del navegador vuelva a la landing
+  useEffect(() => {
+    function handlePopState() {
+      if (entered) {
+        setVisible(false)
+        setTimeout(() => {
+          setEntered(false)
+          setVisible(true)
+        }, 300)
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [entered])
+
   function handleEnter(tab = 'analysis') {
     setVisible(false)
     setTimeout(() => {
       setStartTab(tab)
       setEntered(true)
       setVisible(true)
+      // Añadir estado al historial para que el botón atrás funcione
+      window.history.pushState({ page: 'tools' }, '', window.location.href)
     }, 300)
   }
 
@@ -22,6 +40,7 @@ export default function App() {
     setTimeout(() => {
       setEntered(false)
       setVisible(true)
+      window.history.back()
     }, 300)
   }
 
