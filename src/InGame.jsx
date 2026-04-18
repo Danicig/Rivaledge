@@ -434,18 +434,18 @@ export default function InGame() {
             </p>
           </div>
           {/* Botón Modo Batalla */}
-          <button
-            onClick={() => setBattleMode(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-orbitron text-xs font-bold tracking-widest uppercase transition-all hover:scale-105 active:scale-100"
-            style={{
-              background: 'linear-gradient(135deg, #1a0808 0%, #2a0f0f 100%)',
-              border: '1px solid rgba(255,34,68,0.4)',
-              color: '#ff4466',
-              boxShadow: '0 0 16px rgba(255,34,68,0.2)',
-            }}>
-            <span className="text-base">⚔️</span>
-            {lang === 'es' ? 'Modo Batalla' : 'Battle Mode'}
-          </button>
+          <div className="sm:hidden flex flex-col items-end gap-1">
+            <button
+              onClick={() => setBattleMode(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-orbitron text-xs font-bold tracking-widest uppercase transition-all hover:scale-105 active:scale-100"
+              style={{ background: 'linear-gradient(135deg, #1a0808 0%, #2a0f0f 100%)', border: '1px solid rgba(255,34,68,0.4)', color: '#ff4466', boxShadow: '0 0 16px rgba(255,34,68,0.2)' }}>
+              <span className="text-base">⚔️</span>
+              {lang === 'es' ? 'Modo Batalla' : 'Battle Mode'}
+            </button>
+            <p className="font-mono-tech text-xs text-[#4a6070] text-right">
+              {lang === 'es' ? 'Vista simplificada para usar en partida desde el móvil' : 'Simplified view for in-game use on mobile'}
+            </p>
+          </div>
         </div>
       </div>
 
