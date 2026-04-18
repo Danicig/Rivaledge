@@ -10,25 +10,25 @@ const TOOLS = [
   { id: 'types',      icon: '🔷', titleKey: 'tool.types.title',      descKey: 'tool.types.desc',      color: '#33aa33', border: 'border-green-400/30',   bg: 'bg-green-400/5',   accentColor: 'rgba(51,170,51,0.5)' },
 ]
 
-// Pokémon laterales — visibles y con glow fuerte
+// Pokémon laterales — PC: todos · Móvil: solo los 2 primeros más pequeños
 const SIDE_POKEMON = [
-  { id: 903, x: '-130px', y: '30px',  size: 420, glow: 'rgba(187,51,17,0.5)',  floatDur: '7s',   driftDur: '13s',  delay: '0s',   flip: false },
-  { id: 445, x: 'calc(100% - 290px)', y: '10px',  size: 440, glow: 'rgba(68,51,221,0.45)', floatDur: '8s',   driftDur: '15s',  delay: '1s',   flip: true  },
-  { id: 983, x: '-100px', y: '430px', size: 330, glow: 'rgba(80,60,40,0.5)',   floatDur: '9s',   driftDur: '17s',  delay: '2s',   flip: false },
-  { id: 727, x: 'calc(100% - 270px)', y: '420px', size: 350, glow: 'rgba(255,68,34,0.4)',  floatDur: '6.5s', driftDur: '12s',  delay: '0.5s', flip: true  },
-  { id: 6,   x: 'calc(100% - 210px)', y: '720px', size: 290, glow: 'rgba(255,136,68,0.35)',floatDur: '7.5s', driftDur: '14s',  delay: '1.5s', flip: true  },
-  { id: 176, x: '-70px',  y: '780px', size: 270, glow: 'rgba(238,136,187,0.35)',floatDur: '10s', driftDur: '18s',  delay: '3s',   flip: false },
+  { id: 903, x: '-130px', y: '30px',  size: 420, mobileSize: 180, mobileX: '-60px', mobileY: '60px',  glow: 'rgba(187,51,17,0.5)',   floatDur: '7s',   driftDur: '13s', delay: '0s',   flip: false, mobile: true  },
+  { id: 445, x: 'calc(100% - 290px)', y: '10px', size: 440, mobileSize: 190, mobileX: 'calc(100% - 130px)', mobileY: '50px', glow: 'rgba(68,51,221,0.45)', floatDur: '8s', driftDur: '15s', delay: '1s', flip: true, mobile: true },
+  { id: 983, x: '-100px', y: '430px', size: 330, glow: 'rgba(80,60,40,0.5)',   floatDur: '9s',   driftDur: '17s', delay: '2s',   flip: false, mobile: false },
+  { id: 727, x: 'calc(100% - 270px)', y: '420px', size: 350, glow: 'rgba(255,68,34,0.4)', floatDur: '6.5s', driftDur: '12s', delay: '0.5s', flip: true, mobile: false },
+  { id: 6,   x: 'calc(100% - 210px)', y: '720px', size: 290, glow: 'rgba(255,136,68,0.35)', floatDur: '7.5s', driftDur: '14s', delay: '1.5s', flip: true, mobile: false },
+  { id: 176, x: '-70px',  y: '780px', size: 270, glow: 'rgba(238,136,187,0.35)', floatDur: '10s', driftDur: '18s', delay: '3s', flip: false, mobile: false },
 ]
 
-// Pokémon centrales — detrás del contenido, muy sutiles
+// Pokémon centrales — solo PC
 const CENTER_POKEMON = [
-  { id: 655,  x: '18%',  y: '5%',   size: 200, opacity: 0.07, glow: 'rgba(255,68,136,0.2)', floatDur: '11s', driftDur: '20s', delay: '0s',   flip: false },
-  { id: 142,  x: '68%',  y: '2%',   size: 220, opacity: 0.06, glow: 'rgba(170,170,85,0.2)', floatDur: '9s',  driftDur: '22s', delay: '2s',   flip: true  },
-  { id: 948,  x: '30%',  y: '38%',  size: 180, opacity: 0.07, glow: 'rgba(51,170,51,0.2)',  floatDur: '12s', driftDur: '19s', delay: '1s',   flip: false },
-  { id: 670,  x: '60%',  y: '35%',  size: 160, opacity: 0.07, glow: 'rgba(238,136,187,0.2)',floatDur: '8s',  driftDur: '21s', delay: '3s',   flip: true  },
-  { id: 260,  x: '22%',  y: '65%',  size: 190, opacity: 0.06, glow: 'rgba(34,136,255,0.2)', floatDur: '10s', driftDur: '16s', delay: '1.5s', flip: false },
-  { id: 373,  x: '62%',  y: '62%',  size: 200, opacity: 0.06, glow: 'rgba(68,51,221,0.2)',  floatDur: '13s', driftDur: '23s', delay: '0.5s', flip: true  },
-  { id: 249,  x: '42%',  y: '20%',  size: 170, opacity: 0.05, glow: 'rgba(100,85,170,0.15)',floatDur: '14s', driftDur: '25s', delay: '4s',   flip: false },
+  { id: 655, x: '18%', y: '5%',  size: 200, opacity: 0.07, glow: 'rgba(255,68,136,0.2)',  floatDur: '11s', delay: '0s',   flip: false },
+  { id: 142, x: '68%', y: '2%',  size: 220, opacity: 0.06, glow: 'rgba(170,170,85,0.2)',  floatDur: '9s',  delay: '2s',   flip: true  },
+  { id: 948, x: '30%', y: '38%', size: 180, opacity: 0.07, glow: 'rgba(51,170,51,0.2)',   floatDur: '12s', delay: '1s',   flip: false },
+  { id: 670, x: '60%', y: '35%', size: 160, opacity: 0.07, glow: 'rgba(238,136,187,0.2)', floatDur: '8s',  delay: '3s',   flip: true  },
+  { id: 260, x: '22%', y: '65%', size: 190, opacity: 0.06, glow: 'rgba(34,136,255,0.2)',  floatDur: '10s', delay: '1.5s', flip: false },
+  { id: 373, x: '62%', y: '62%', size: 200, opacity: 0.06, glow: 'rgba(68,51,221,0.2)',   floatDur: '13s', delay: '0.5s', flip: true  },
+  { id: 249, x: '42%', y: '20%', size: 170, opacity: 0.05, glow: 'rgba(100,85,170,0.15)', floatDur: '14s', delay: '4s',   flip: false },
 ]
 
 function getArtworkUrl(id) {
@@ -189,6 +189,14 @@ export default function Landing({ onEnter }) {
           0%, 100% { transform: scaleX(-1) translateY(0px) rotate(1.5deg); }
           50%       { transform: scaleX(-1) translateY(-28px) rotate(-1.5deg); }
         }
+        @keyframes floatYMobile {
+          0%, 100% { transform: translateY(0px) rotate(-1deg); }
+          50%       { transform: translateY(-14px) rotate(1deg); }
+        }
+        @keyframes floatYMobileFlip {
+          0%, 100% { transform: scaleX(-1) translateY(0px) rotate(1deg); }
+          50%       { transform: scaleX(-1) translateY(-14px) rotate(-1deg); }
+        }
         @keyframes driftX {
           0%, 100% { margin-left: 0px; }
           50%       { margin-left: 18px; }
@@ -223,61 +231,55 @@ export default function Landing({ onEnter }) {
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 45% 80% at -5% 35%, rgba(187,51,17,0.12) 0%, transparent 60%)' }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 45% 80% at 105% 35%, rgba(68,51,221,0.1) 0%, transparent 60%)' }} />
 
-      {/* ── POKÉMON CENTRALES — z:1, muy sutiles, detrás del contenido ── */}
+      {/* ── POKÉMON CENTRALES — solo lg+ ── */}
       {CENTER_POKEMON.map((p) => (
         <div key={`center-${p.id}-${p.x}`}
           className="absolute pointer-events-none select-none hidden lg:block"
           style={{ left: p.x, top: p.y, width: p.size, height: p.size, zIndex: 1 }}>
-          <div style={{
-            position: 'absolute', inset: '-30%',
-            background: `radial-gradient(ellipse, ${p.glow} 0%, transparent 70%)`,
-            animation: `glowPulse ${p.floatDur} ease-in-out infinite`,
-            animationDelay: p.delay,
-          }} />
+          <div style={{ position: 'absolute', inset: '-30%', background: `radial-gradient(ellipse, ${p.glow} 0%, transparent 70%)`, animation: `glowPulse ${p.floatDur} ease-in-out infinite`, animationDelay: p.delay }} />
           <img src={getArtworkUrl(p.id)} alt=""
-            style={{
-              width: '100%', height: '100%', objectFit: 'contain',
-              opacity: p.opacity,
-              animation: `${p.flip ? 'centerFloatFlip' : 'centerFloat'} ${p.floatDur} ease-in-out infinite, fadeInPoke 2s ease both`,
-              animationDelay: p.delay,
-            }} />
+            style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: p.opacity, animation: `${p.flip ? 'centerFloatFlip' : 'centerFloat'} ${p.floatDur} ease-in-out infinite, fadeInPoke 2s ease both`, animationDelay: p.delay }} />
         </div>
       ))}
 
-      {/* ── POKÉMON LATERALES — z:2, visibles ── */}
-      {SIDE_POKEMON.map((p, i) => (
-        <div key={`side-${p.id}-${i}`}
+      {/* ── POKÉMON LATERALES PC — sm+ ── */}
+      {SIDE_POKEMON.filter(p => !p.mobile).map((p, i) => (
+        <div key={`side-pc-${p.id}-${i}`}
           className="absolute pointer-events-none select-none hidden sm:block"
           style={{ left: p.x, top: p.y, width: p.size, height: p.size, zIndex: 2 }}>
-          <div style={{
-            position: 'absolute', inset: '-20%',
-            background: `radial-gradient(ellipse, ${p.glow} 0%, transparent 70%)`,
-            animation: `glowPulse ${p.floatDur} ease-in-out infinite`,
-            animationDelay: p.delay,
-          }} />
+          <div style={{ position: 'absolute', inset: '-20%', background: `radial-gradient(ellipse, ${p.glow} 0%, transparent 70%)`, animation: `glowPulse ${p.floatDur} ease-in-out infinite`, animationDelay: p.delay }} />
           <img src={getArtworkUrl(p.id)} alt=""
-            style={{
-              width: '100%', height: '100%', objectFit: 'contain',
-              opacity: 0.22,
-              animation: `${p.flip ? 'floatYFlip' : 'floatY'} ${p.floatDur} ease-in-out infinite, ${p.flip ? 'driftXFlip' : 'driftX'} ${p.driftDur} ease-in-out infinite, fadeInPoke 1.5s ease both`,
-              animationDelay: p.delay,
-            }} />
+            style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: 0.22, animation: `${p.flip ? 'floatYFlip' : 'floatY'} ${p.floatDur} ease-in-out infinite, ${p.flip ? 'driftXFlip' : 'driftX'} ${p.driftDur} ease-in-out infinite, fadeInPoke 1.5s ease both`, animationDelay: p.delay }} />
         </div>
       ))}
 
-      {/* Viñeta central suave — el contenido destaca sobre los Pokémon centrales */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'radial-gradient(ellipse 55% 90% at 50% 45%, rgba(6,8,10,0.6) 0%, transparent 70%)',
-        zIndex: 3,
-      }} />
+      {/* ── POKÉMON LATERALES MÓVIL — solo los 2 principales, pequeños ── */}
+      {SIDE_POKEMON.filter(p => p.mobile).map((p, i) => (
+        <>
+          {/* Versión móvil */}
+          <div key={`side-mobile-${p.id}`}
+            className="absolute pointer-events-none select-none block sm:hidden"
+            style={{ left: p.mobileX, top: p.mobileY, width: p.mobileSize, height: p.mobileSize, zIndex: 2 }}>
+            <div style={{ position: 'absolute', inset: '-20%', background: `radial-gradient(ellipse, ${p.glow} 0%, transparent 70%)`, animation: `glowPulse ${p.floatDur} ease-in-out infinite`, animationDelay: p.delay }} />
+            <img src={getArtworkUrl(p.id)} alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: 0.18, animation: `${p.flip ? 'floatYMobileFlip' : 'floatYMobile'} ${p.floatDur} ease-in-out infinite, fadeInPoke 1.5s ease both`, animationDelay: p.delay }} />
+          </div>
+          {/* Versión PC */}
+          <div key={`side-pc-${p.id}`}
+            className="absolute pointer-events-none select-none hidden sm:block"
+            style={{ left: p.x, top: p.y, width: p.size, height: p.size, zIndex: 2 }}>
+            <div style={{ position: 'absolute', inset: '-20%', background: `radial-gradient(ellipse, ${p.glow} 0%, transparent 70%)`, animation: `glowPulse ${p.floatDur} ease-in-out infinite`, animationDelay: p.delay }} />
+            <img src={getArtworkUrl(p.id)} alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: 0.22, animation: `${p.flip ? 'floatYFlip' : 'floatY'} ${p.floatDur} ease-in-out infinite, ${p.flip ? 'driftXFlip' : 'driftX'} ${p.driftDur} ease-in-out infinite, fadeInPoke 1.5s ease both`, animationDelay: p.delay }} />
+          </div>
+        </>
+      ))}
 
-      {/* Viñeta inferior */}
-      <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none" style={{
-        background: 'linear-gradient(to top, #06080a 0%, transparent 100%)',
-        zIndex: 3,
-      }} />
+      {/* Viñeta central */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 55% 90% at 50% 45%, rgba(6,8,10,0.6) 0%, transparent 70%)', zIndex: 3 }} />
+      <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none" style={{ background: 'linear-gradient(to top, #06080a 0%, transparent 100%)', zIndex: 3 }} />
 
-      {/* ── CONTENIDO — z:10 ── */}
+      {/* ── CONTENIDO ── */}
       <div className="absolute top-4 right-4 z-20">
         <LangToggle lang={lang} />
       </div>
