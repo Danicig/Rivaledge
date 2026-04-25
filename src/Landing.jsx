@@ -6,6 +6,7 @@ const TOOLS = [
   { id: 'ingame',     icon: '⚡', titleKey: 'tool.ingame.title',     descKey: 'tool.ingame.desc',     color: '#ff4422', border: 'border-red-400/30',     bg: 'bg-red-400/5',     accentColor: 'rgba(255,68,34,0.5)' },
   { id: 'damage',     icon: '💥', titleKey: 'tool.damage.title',     descKey: 'tool.damage.desc',     color: '#ff8844', border: 'border-orange-400/30',  bg: 'bg-orange-400/5',  accentColor: 'rgba(255,136,68,0.5)' },
   { id: 'tierlist',   icon: '📊', titleKey: 'tool.tierlist.title',   descKey: 'tool.tierlist.desc',   color: '#33aaff', border: 'border-blue-400/30',    bg: 'bg-blue-400/5',    accentColor: 'rgba(51,170,255,0.5)' },
+  { id: 'pokedex',    icon: '📖', titleKey: 'tool.pokedex.title',    descKey: 'tool.pokedex.desc',    color: '#cc44ff', border: 'border-purple-400/30',  bg: 'bg-purple-400/5',  accentColor: 'rgba(204,68,255,0.5)' },
   { id: 'speedtiers', icon: '🏃', titleKey: 'tool.speedtiers.title', descKey: 'tool.speedtiers.desc', color: '#33cc88', border: 'border-emerald-400/30', bg: 'bg-emerald-400/5', accentColor: 'rgba(51,204,136,0.5)' },
   { id: 'types',      icon: '🔷', titleKey: 'tool.types.title',      descKey: 'tool.types.desc',      color: '#33aa33', border: 'border-green-400/30',   bg: 'bg-green-400/5',   accentColor: 'rgba(51,170,51,0.5)' },
 ]
@@ -20,7 +21,6 @@ const SIDE_POKEMON = [
   { id: 176, x: '-70px',  y: '780px', size: 270, glow: 'rgba(238,136,187,0.35)', floatDur: '10s', driftDur: '18s', delay: '3s', flip: false, mobile: false },
 ]
 
-// Pokémon centrales — solo PC
 const CENTER_POKEMON = [
   { id: 655, x: '18%', y: '5%',  size: 200, opacity: 0.07, glow: 'rgba(255,68,136,0.2)',  floatDur: '11s', delay: '0s',   flip: false },
   { id: 142, x: '68%', y: '2%',  size: 220, opacity: 0.06, glow: 'rgba(170,170,85,0.2)',  floatDur: '9s',  delay: '2s',   flip: true  },
@@ -166,7 +166,7 @@ export default function Landing({ onEnter }) {
   const STATS = [
     { value: 187,   labelKey: 'landing.stat.pokemon', isNumber: true },
     { value: 59,    labelKey: 'landing.stat.megas',   isNumber: true },
-    { value: 6,     labelKey: 'landing.stat.tools',   isNumber: true },
+    { value: 7,     labelKey: 'landing.stat.tools',   isNumber: true },
     { value: 'M-A', labelKey: 'landing.stat.reg',     isNumber: false },
   ]
 
@@ -225,13 +225,11 @@ export default function Landing({ onEnter }) {
         }
       `}</style>
 
-      {/* ── FONDO ── */}
       <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #080c12 0%, #06080a 40%, #0a0608 100%)' }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 90% 40% at 50% -5%, rgba(240,192,64,0.18) 0%, transparent 65%)' }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 45% 80% at -5% 35%, rgba(187,51,17,0.12) 0%, transparent 60%)' }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 45% 80% at 105% 35%, rgba(68,51,221,0.1) 0%, transparent 60%)' }} />
 
-      {/* ── POKÉMON CENTRALES — solo lg+ ── */}
       {CENTER_POKEMON.map((p) => (
         <div key={`center-${p.id}-${p.x}`}
           className="absolute pointer-events-none select-none hidden lg:block"
@@ -242,7 +240,6 @@ export default function Landing({ onEnter }) {
         </div>
       ))}
 
-      {/* ── POKÉMON LATERALES PC — sm+ ── */}
       {SIDE_POKEMON.filter(p => !p.mobile).map((p, i) => (
         <div key={`side-pc-${p.id}-${i}`}
           className="absolute pointer-events-none select-none hidden sm:block"
@@ -253,10 +250,8 @@ export default function Landing({ onEnter }) {
         </div>
       ))}
 
-      {/* ── POKÉMON LATERALES MÓVIL — solo los 2 principales, pequeños ── */}
       {SIDE_POKEMON.filter(p => p.mobile).map((p, i) => (
         <>
-          {/* Versión móvil */}
           <div key={`side-mobile-${p.id}`}
             className="absolute pointer-events-none select-none block sm:hidden"
             style={{ left: p.mobileX, top: p.mobileY, width: p.mobileSize, height: p.mobileSize, zIndex: 2 }}>
@@ -264,7 +259,6 @@ export default function Landing({ onEnter }) {
             <img src={getArtworkUrl(p.id)} alt=""
               style={{ width: '100%', height: '100%', objectFit: 'contain', opacity: 0.18, animation: `${p.flip ? 'floatYMobileFlip' : 'floatYMobile'} ${p.floatDur} ease-in-out infinite, fadeInPoke 1.5s ease both`, animationDelay: p.delay }} />
           </div>
-          {/* Versión PC */}
           <div key={`side-pc-${p.id}`}
             className="absolute pointer-events-none select-none hidden sm:block"
             style={{ left: p.x, top: p.y, width: p.size, height: p.size, zIndex: 2 }}>
@@ -275,45 +269,36 @@ export default function Landing({ onEnter }) {
         </>
       ))}
 
-      {/* Viñeta central */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 55% 90% at 50% 45%, rgba(6,8,10,0.6) 0%, transparent 70%)', zIndex: 3 }} />
       <div className="absolute bottom-0 left-0 right-0 h-48 pointer-events-none" style={{ background: 'linear-gradient(to top, #06080a 0%, transparent 100%)', zIndex: 3 }} />
 
-      {/* ── CONTENIDO ── */}
       <div className="absolute top-4 right-4 z-20">
         <LangToggle lang={lang} />
       </div>
 
-      {/* Hero */}
       <div className={`relative flex flex-col items-center justify-center px-6 pt-24 pb-16 text-center transition-all duration-1000 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ zIndex: 10 }}>
         <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/30 rounded-full px-4 py-1.5 mb-8 backdrop-blur-sm">
           <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
           <span className="font-mono-tech text-xs text-yellow-400 tracking-widest uppercase">{t('global.regulation')}</span>
         </div>
-
         <h1 className="font-orbitron text-4xl sm:text-7xl lg:text-8xl font-black tracking-widest mb-4 leading-none">
           RIVAL<span className="text-yellow-400" style={{ textShadow: '0 0 60px rgba(240,192,64,0.8), 0 0 120px rgba(240,192,64,0.3), 0 0 200px rgba(240,192,64,0.1)' }}>EDGE</span>
         </h1>
-
         <p className="font-mono-tech text-lg text-[#8899aa] mb-4 tracking-wide max-w-xl">{t('landing.tagline')}</p>
         <p className="text-[#6a7a8a] text-sm max-w-lg mb-12 leading-relaxed">{t('landing.desc')}</p>
-
         <button onClick={() => onEnter('analysis')}
           className="group relative px-12 py-4 bg-yellow-400 text-black font-orbitron font-black text-sm tracking-widest uppercase rounded-xl transition-all duration-300 hover:scale-105 active:scale-100 mb-4 overflow-hidden"
           style={{ boxShadow: '0 0 50px rgba(240,192,64,0.6), 0 4px 30px rgba(240,192,64,0.4)' }}>
           <span className="relative z-10">{t('landing.cta')}</span>
           <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12" />
         </button>
-
         <p className="text-xs text-[#4a6070] font-mono-tech mb-8">{t('global.free')}</p>
-
         <div className="flex flex-col items-center gap-1 opacity-40">
           <span className="font-mono-tech text-[10px] text-[#4a6070] tracking-widest uppercase">{t('global.scroll')}</span>
           <div className="w-px h-6 bg-gradient-to-b from-yellow-400/50 to-transparent animate-bounce" />
         </div>
       </div>
 
-      {/* Stats */}
       <div ref={statsRef}
         className={`relative grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto px-6 mb-16 transition-all duration-1000 delay-200 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         style={{ zIndex: 10 }}>
@@ -322,7 +307,6 @@ export default function Landing({ onEnter }) {
         ))}
       </div>
 
-      {/* Tools */}
       <div className={`relative max-w-5xl mx-auto px-6 mb-20 transition-all duration-1000 delay-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
         style={{ zIndex: 10 }}>
         <p className="font-mono-tech text-xs text-[#4a6070] tracking-widest uppercase text-center mb-8">{t('global.available_tools')}</p>
@@ -358,7 +342,6 @@ export default function Landing({ onEnter }) {
         </div>
       </div>
 
-      {/* Footer */}
       <div className={`relative text-center pb-20 transition-all duration-1000 delay-500 ${visible ? 'opacity-100' : 'opacity-0'}`} style={{ zIndex: 10 }}>
         <p className="font-mono-tech text-xs text-[#2a3840]">{t('global.footer')}</p>
       </div>
